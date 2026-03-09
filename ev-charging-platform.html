@@ -1206,13 +1206,19 @@
     </div>
 
     <div class="insights-panel">
-      <div class="insight-card fade-in">
+      <div class="insight-card fade-in" style="border-color: var(--electric); box-shadow: 0 0 20px rgba(0,229,255,0.15);">
         <div class="insight-header">
-          <div class="insight-icon">⚡</div>
-          <div class="insight-title">Peak Demand Window</div>
+          <div class="insight-icon" style="color: var(--volt);">⚡</div>
+          <div class="insight-title">Active Load Balancing (V2G)</div>
         </div>
-        <div class="insight-body">Forecast shows demand spike of <strong>+34%</strong> between 17:00–19:30 today. Pre-staging recommended for 6 additional fast chargers.</div>
-        <div class="insight-value val-amber">18:30 UTC</div>
+        <div class="insight-body" style="margin-bottom: 16px;">
+          Grid stress detected. Discharge idle fleet batteries back to the grid to shave peak demand and reduce wholesale energy costs.
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace;">AVAILABLE V2G FLEET</span>
+          <span style="font-size: 14px; color: #fff; font-family: 'Rajdhani', sans-serif; font-weight: 700;">84 VEHICLES</span>
+        </div>
+        <button id="v2g-deploy-btn" class="btn-primary" style="width: 100%; text-align: center;">Deploy V2G Fleet</button>
       </div>
       <div class="insight-card fade-in" style="animation-delay:0.1s">
         <div class="insight-header">
@@ -1419,28 +1425,33 @@ const demandChart = new Chart(demandCtx, {
 // Live update demand
 // 1. Function to fetch history from Supabase
 // Live update demand chart from demand_history table
+// --- LIVE DEMAND CHART LOGIC ---
+// Global offset for our V2G simulation
+let v2gOffset = 0; 
+
 async function updateDemandChart() {
     try {
         const { data, error } = await _supabase
             .from('demand_history')
             .select('*')
-            .order('created_at', { ascending: false }) // Changed to false to get newest
+            .order('created_at', { ascending: false }) 
             .limit(30);
 
         if (error || !data || data.length === 0) return;
 
-        // Reverse to show left-to-right
         const sortedData = data.reverse();
 
         const newLabels = sortedData.map(row => {
             const d = new Date(row.created_at);
             return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
         });
-        const newValues = sortedData.map(row => row.kw_value);
+        
+        // Apply the V2G offset to the incoming live data (reduces demand if V2G is active)
+        const newValues = sortedData.map(row => row.kw_value * (1 - v2gOffset));
 
         demandChart.data.labels = newLabels;
         demandChart.data.datasets[0].data = newValues;
-        demandChart.update('none'); // 'none' prevents annoying flashing animations
+        demandChart.update('none'); 
 
     } catch (error) {
         console.error("Error updating demand chart:", error);
@@ -1554,28 +1565,32 @@ async function loadForecastChart() {
 // Call the function so it runs when the page loads
 loadForecastChart();
 
-// ── FORECAST MAIN CHART ──
+// ── FORECAST MAIN CHART & V2G SIMULATOR ──
 const fmCtx = document.getElementById('forecastMain').getContext('2d');
 const fmLabels = Array.from({length:48}, (_,i) => {
   const h = i % 24;
   return (h === 0 ? 'Day ' + (Math.floor(i/24)+1) + ' ' : '') + h.toString().padStart(2,'0') + ':00';
 }).filter((_,i) => i % 2 === 0);
 
-const baseForecast = Array.from({length:24}, (_,i) => {
+// Base forecast calculation
+let originalForecast = Array.from({length:24}, (_,i) => {
   return 800 + 1200 * Math.sin(((i - 6) / 24) * Math.PI) + Math.random()*100;
 });
 
-const upper = baseForecast.map(v => v * 1.08 + 50);
-const lower = baseForecast.map(v => v * 0.92 - 50);
+// We keep a working copy of the data for the chart
+let currentForecastData = [...originalForecast];
+const upper = currentForecastData.map(v => v * 1.08 + 50);
+const lower = currentForecastData.map(v => v * 0.92 - 50);
 
-new Chart(fmCtx, {
+// Create the chart as a variable we can update later
+const forecastMainChart = new Chart(fmCtx, {
   type: 'line',
   data: {
     labels: fmLabels,
     datasets: [
       {
         label: 'Forecast',
-        data: baseForecast,
+        data: currentForecastData,
         borderColor: '#00e5ff',
         borderWidth: 2,
         tension: 0.4,
@@ -1605,13 +1620,68 @@ new Chart(fmCtx, {
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false }
-    },
+    plugins: { legend: { display: false } },
     scales: {
       x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 8 } },
       y: { grid: { color: 'rgba(255,255,255,0.04)' }, min: 0, ticks: { callback: v => (v/1000).toFixed(1) + ' MW' } }
     }
+  }
+});
+
+// --- V2G OPTIMIZATION LOGIC ---
+let isV2GActive = false;
+const v2gBtn = document.getElementById('v2g-deploy-btn');
+
+v2gBtn.addEventListener('click', () => {
+  isV2GActive = !isV2GActive;
+  
+  if (isV2GActive) {
+    // 1. Change Button State
+    v2gBtn.textContent = "V2G Active: Shaving Peak";
+    v2gBtn.style.background = "var(--volt)";
+    v2gBtn.style.color = "#000";
+    v2gBtn.style.boxShadow = "0 0 20px rgba(118,255,3,0.5)";
+
+    // 2. Update FORECAST Chart (Flatten the curve)
+    for(let i = 0; i < currentForecastData.length; i++) {
+      if(currentForecastData[i] > 1500) { 
+        currentForecastData[i] = currentForecastData[i] - (currentForecastData[i] * 0.30); 
+      }
+    }
+    forecastMainChart.data.datasets[0].borderColor = '#76ff03'; 
+    forecastMainChart.update();
+
+    // 3. Update LIVE DEMAND Chart (Instantly drop the live load)
+    v2gOffset = 0.30; // 30% reduction
+    demandChart.data.datasets[0].borderColor = '#76ff03'; // Change line to Volt green
+    demandChart.data.datasets[0].backgroundColor = 'rgba(118,255,3,0.1)'; // Green glow
+    
+    // Instantly apply the offset to the currently displayed live data
+    demandChart.data.datasets[0].data = demandChart.data.datasets[0].data.map(val => val * (1 - v2gOffset));
+    demandChart.update();
+
+    // 4. Update the Revenue Metric
+    const revEl = document.getElementById('energy'); 
+    if(revEl) revEl.textContent = (parseFloat(revEl.textContent) + 42).toString();
+
+  } else {
+    // Revert everything to normal state
+    v2gBtn.textContent = "Deploy V2G Fleet";
+    v2gBtn.style.background = "var(--electric)";
+    v2gBtn.style.boxShadow = "none";
+    
+    // Revert Forecast Chart
+    currentForecastData = [...originalForecast];
+    forecastMainChart.data.datasets[0].borderColor = '#00e5ff';
+    forecastMainChart.update();
+
+    // Revert Live Demand Chart
+    v2gOffset = 0; // Remove the reduction
+    demandChart.data.datasets[0].borderColor = '#00e5ff'; // Back to Electric cyan
+    demandChart.data.datasets[0].backgroundColor = 'rgba(0,229,255,0.06)';
+    
+    // Fetch fresh, unmodified data from Supabase to restore the chart
+    updateDemandChart(); 
   }
 });
 
