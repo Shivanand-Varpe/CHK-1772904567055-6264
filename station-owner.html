@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoltIQ — Station Owner Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#040b14; --bg2:#071220; --bg3:#0a1929;
+  --electric:#00e5ff; --volt:#76ff03; --amber:#ffab00;
+  --red:#ff1744; --purple:#b388ff;
+  --surface:rgba(0,229,255,0.04); --border:rgba(0,229,255,0.12);
+  --text:#e0f7fa; --muted:#607d8b;
+  --glow:0 0 30px rgba(0,229,255,0.25); --radius:4px;
+  --owner:#76ff03;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:300;overflow-x:hidden;line-height:1.5;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.35;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--volt);border-radius:2px;}
+
+@keyframes pulse-bolt{0%,100%{filter:drop-shadow(0 0 8px var(--electric));}50%{filter:drop-shadow(0 0 20px var(--electric)) drop-shadow(0 0 36px var(--electric));}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(200%);}}
+@keyframes grid-shift{0%{transform:translateY(0);}100%{transform:translateY(60px);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes volt-pulse{0%,100%{box-shadow:0 0 16px rgba(118,255,3,0.2);}50%{box-shadow:0 0 32px rgba(118,255,3,0.4),0 0 60px rgba(118,255,3,0.1);}}
+
+/* BG */
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(118,255,3,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(118,255,3,0.02) 1px,transparent 1px);background-size:60px 60px;animation:grid-shift 20s linear infinite;pointer-events:none;z-index:0;}
+.glow-1{position:fixed;width:600px;height:600px;background:radial-gradient(circle,rgba(118,255,3,0.06) 0%,transparent 70%);top:-150px;right:-150px;pointer-events:none;z-index:0;}
+.glow-2{position:fixed;width:400px;height:400px;background:radial-gradient(circle,rgba(0,229,255,0.04) 0%,transparent 70%);bottom:-100px;left:-100px;pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:68px;background:rgba(4,11,20,0.92);backdrop-filter:blur(24px);border-bottom:1px solid rgba(118,255,3,0.1);}
+.nav-logo{display:flex;align-items:center;gap:12px;font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:0.02em;}
+.nav-logo .bolt{width:32px;height:32px;background:var(--electric);clip-path:polygon(60% 0%,40% 45%,70% 45%,30% 100%,55% 55%,25% 55%);filter:drop-shadow(0 0 8px var(--electric));animation:pulse-bolt 2s ease-in-out infinite;flex-shrink:0;}
+.nav-logo span{color:var(--electric);}
+.nav-owner-badge{display:flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(118,255,3,0.08);border:1px solid rgba(118,255,3,0.2);border-radius:20px;font-size:11px;font-family:'Space Mono',monospace;color:var(--volt);}
+.nav-owner-dot{width:6px;height:6px;border-radius:50%;background:var(--volt);box-shadow:0 0 8px var(--volt);animation:blink 2s infinite;}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.btn-ghost{padding:8px 18px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:500;cursor:pointer;letter-spacing:0.06em;transition:all 0.2s;font-family:'Inter',sans-serif;border-radius:var(--radius);}
+.btn-ghost:hover{border-color:var(--volt);color:var(--volt);background:rgba(118,255,3,0.05);}
+.btn-logout{border-color:rgba(255,23,68,0.3);color:var(--red);}
+.btn-logout:hover{border-color:var(--red);background:rgba(255,23,68,0.05);}
+
+/* ACCESS DENIED SCREEN */
+.access-denied{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:800;flex-direction:column;gap:20px;text-align:center;padding:32px;}
+.access-denied .icon{font-size:56px;margin-bottom:8px;}
+.access-denied h2{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.05em;}
+.access-denied p{color:var(--muted);font-size:14px;max-width:400px;line-height:1.6;}
+.access-denied .btn-goto{padding:12px 32px;background:var(--electric);border:none;color:#000;font-size:13px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:0.1em;text-transform:uppercase;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;margin-top:8px;}
+.access-denied .btn-goto:hover{box-shadow:0 0 24px rgba(0,229,255,0.4);}
+
+/* PENDING APPROVAL SCREEN */
+.pending-screen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:800;flex-direction:column;gap:20px;text-align:center;padding:32px;}
+.pending-screen .icon{font-size:56px;}
+.pending-screen h2{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:0.05em;}
+.pending-screen p{color:var(--muted);font-size:14px;max-width:420px;line-height:1.6;}
+.pending-badge{background:rgba(255,171,0,0.1);border:1px solid rgba(255,171,0,0.25);color:var(--amber);font-family:'Space Mono',monospace;font-size:11px;padding:6px 16px;border-radius:20px;letter-spacing:0.1em;}
+
+/* MAIN LAYOUT */
+.owner-page{padding-top:68px;min-height:100vh;position:relative;z-index:1;display:none;}
+.owner-layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 68px);}
+
+/* SIDEBAR */
+.sidebar{background:var(--bg2);border-right:1px solid rgba(118,255,3,0.08);padding:32px 0;position:sticky;top:68px;height:calc(100vh - 68px);overflow-y:auto;}
+.sidebar-section{padding:0 20px 24px;margin-bottom:8px;border-bottom:1px solid var(--border);}
+.sidebar-section:last-child{border-bottom:none;}
+.sidebar-label{font-size:9px;font-family:'Space Mono',monospace;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding:0 4px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;font-size:13px;color:var(--muted);font-weight:500;margin-bottom:2px;}
+.sidebar-item:hover{background:rgba(118,255,3,0.06);color:var(--text);}
+.sidebar-item.active{background:rgba(118,255,3,0.1);color:var(--volt);border:1px solid rgba(118,255,3,0.15);}
+.sidebar-item .si-icon{font-size:15px;flex-shrink:0;}
+.sidebar-station-info{padding:16px;background:rgba(118,255,3,0.05);border:1px solid rgba(118,255,3,0.12);border-radius:6px;margin:20px 20px 0;}
+.ssi-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;}
+.ssi-status{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'Space Mono',monospace;}
+.ssi-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ssi-dot.active{background:var(--volt);box-shadow:0 0 6px var(--volt);}
+.ssi-dot.busy{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+.ssi-dot.offline{background:var(--red);box-shadow:0 0 6px var(--red);}
+
+/* MAIN CONTENT */
+.owner-main{padding:40px 48px;overflow-y:auto;}
+.panel{display:none;animation:fadeUp 0.4s ease forwards;}
+.panel.active{display:block;}
+
+/* SECTION HEADER */
+.panel-header{margin-bottom:32px;}
+.panel-eyebrow{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--volt);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.panel-eyebrow::before{content:'';width:24px;height:1px;background:var(--volt);}
+.panel-title{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;text-transform:uppercase;color:#fff;letter-spacing:-0.01em;line-height:1.05;}
+.panel-title em{color:var(--volt);font-style:normal;}
+.panel-desc{color:var(--muted);font-size:14px;margin-top:8px;line-height:1.6;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px;position:relative;overflow:hidden;margin-bottom:20px;}
+.card::before{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(118,255,3,0.02),transparent);animation:shimmer 6s infinite;}
+.card-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--volt);margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.card-title::before{content:'';width:16px;height:2px;background:var(--volt);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-grid.single{grid-template-columns:1fr;}
+.form-grid.triple{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+.form-group label{font-size:10px;font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.form-group input,.form-group select,.form-group textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s,box-shadow 0.2s;width:100%;}
+.form-group input::placeholder,.form-group textarea::placeholder{color:var(--muted);opacity:0.5;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--volt);box-shadow:0 0 0 3px rgba(118,255,3,0.07);}
+.form-group select{cursor:pointer;}
+.form-group select option{background:var(--bg3);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-hint{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* SUBMIT BUTTON */
+.btn-save{padding:13px 32px;background:var(--volt);border:none;color:#000;font-size:13px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:0.12em;text-transform:uppercase;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.btn-save::after{content:'';position:absolute;inset:0;background:#fff;opacity:0;transition:opacity 0.2s;}
+.btn-save:hover::after{opacity:0.1;}
+.btn-save:hover{box-shadow:0 0 28px rgba(118,255,3,0.5);}
+.btn-save:active{transform:scale(0.98);}
+.btn-save:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-danger{padding:10px 24px;background:transparent;border:1px solid rgba(255,23,68,0.3);color:var(--red);font-size:12px;font-weight:600;font-family:'Space Mono',monospace;letter-spacing:0.06em;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;}
+.btn-danger:hover{background:rgba(255,23,68,0.08);border-color:var(--red);}
+
+/* STATUS SELECTOR */
+.status-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+.status-opt{padding:12px 8px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;transition:all 0.2s;background:var(--bg3);}
+.status-opt:hover{border-color:rgba(255,255,255,0.2);}
+.status-opt.sel-active{border-color:var(--volt);background:rgba(118,255,3,0.08);}
+.status-opt.sel-busy{border-color:var(--amber);background:rgba(255,171,0,0.08);}
+.status-opt.sel-offline{border-color:var(--red);background:rgba(255,23,68,0.08);}
+.status-opt .so-icon{font-size:18px;margin-bottom:4px;display:block;}
+.status-opt .so-label{font-size:11px;font-family:'Space Mono',monospace;letter-spacing:0.08em;}
+
+/* LOAD SLIDER */
+.load-slider-wrap{margin-top:4px;}
+.load-slider{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);outline:none;cursor:pointer;}
+.load-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--volt);cursor:pointer;box-shadow:0 0 8px rgba(118,255,3,0.5);}
+.load-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--volt);cursor:pointer;border:none;}
+.load-display{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.load-value{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--volt);}
+.load-bar-mini{flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin:0 16px;}
+.load-bar-fill{height:100%;border-radius:2px;background:var(--volt);box-shadow:0 0 6px rgba(118,255,3,0.5);transition:width 0.3s ease;}
+
+/* CONNECTORS */
+.connector-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.connector-tag{padding:6px 14px;border:1px solid var(--border);border-radius:20px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;transition:all 0.2s;color:var(--muted);}
+.connector-tag:hover{border-color:rgba(118,255,3,0.3);color:var(--text);}
+.connector-tag.selected{border-color:var(--volt);background:rgba(118,255,3,0.1);color:var(--volt);}
+
+/* LIVE STATS ROW */
+.live-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.live-stat{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:18px;position:relative;overflow:hidden;}
+.live-stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.live-stat:nth-child(1)::after{background:var(--electric);}
+.live-stat:nth-child(2)::after{background:var(--volt);}
+.live-stat:nth-child(3)::after{background:var(--amber);}
+.live-stat:nth-child(4)::after{background:var(--purple);}
+.ls-label{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;}
+.ls-value{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:#fff;}
+.ls-value.e{color:var(--electric);}
+.ls-value.v{color:var(--volt);}
+.ls-value.a{color:var(--amber);}
+.ls-value.p{color:var(--purple);}
+.ls-live{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--volt);font-family:'Space Mono',monospace;margin-top:4px;}
+.ls-dot{width:5px;height:5px;background:var(--volt);border-radius:50%;animation:blink 1.5s infinite;}
+
+/* HISTORY TABLE */
+.history-table{width:100%;border-collapse:collapse;font-size:12px;}
+.history-table th{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
+.history-table td{padding:12px 16px;border-bottom:1px solid rgba(0,229,255,0.05);color:var(--text);}
+.history-table tr:hover td{background:rgba(118,255,3,0.02);}
+.history-table .status-cell{display:flex;align-items:center;gap:6px;}
+.h-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;max-width:300px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{border-color:rgba(118,255,3,0.3);color:var(--volt);}
+.toast.error{border-color:rgba(255,23,68,0.3);color:var(--red);}
+
+/* FORM MSG */
+.form-msg{font-size:11px;font-family:'Space Mono',monospace;padding:10px 13px;border-radius:var(--radius);margin-top:12px;display:none;}
+.form-msg.success{background:rgba(118,255,3,0.07);border:1px solid rgba(118,255,3,0.2);color:var(--volt);display:block;}
+.form-msg.error{background:rgba(255,23,68,0.07);border:1px solid rgba(255,23,68,0.2);color:var(--red);display:block;}
+
+/* DIVIDER */
+.form-actions{display:flex;align-items:center;gap:16px;margin-top:24px;flex-wrap:wrap;}
+
+@media(max-width:900px){
+  nav{padding:0 20px;}
+  .owner-layout{grid-template-columns:1fr;}
+  .sidebar{position:static;height:auto;display:flex;overflow-x:auto;padding:12px;gap:8px;border-right:none;border-bottom:1px solid var(--border);}
+  .sidebar-section{padding:0;margin:0;border:none;display:flex;gap:6px;flex-shrink:0;}
+  .sidebar-label{display:none;}
+  .sidebar-station-info{display:none;}
+  .owner-main{padding:24px 20px;}
+  .form-grid{grid-template-columns:1fr;}
+  .form-grid.triple{grid-template-columns:1fr 1fr;}
+  .live-stats{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="glow-1"></div>
+<div class="glow-2"></div>
+<div class="toast" id="toast"></div>
+
+<!-- ACCESS DENIED (shown for non-owners) -->
+<div class="access-denied" id="accessDenied" style="display:none;">
+  <div class="icon">🚫</div>
+  <h2>Access Restricted</h2>
+  <p>This panel is only available to registered Station Owners. Please log in with a station owner account or register as a station owner.</p>
+  <button class="btn-goto" onclick="window.location.href='login.html'">Go to Login</button>
+  <button class="btn-ghost" style="margin-top:4px;" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+</div>
+
+<!-- PENDING APPROVAL -->
+<div class="pending-screen" id="pendingScreen">
+  <div class="icon">⏳</div>
+  <h2>Awaiting Approval</h2>
+  <div class="pending-badge">STATUS: UNDER REVIEW</div>
+  <p>Your station owner account has been submitted and is currently being reviewed by a VoltIQ admin. You'll receive access once approved — usually within 24 hours.</p>
+  <button class="btn-ghost" onclick="window.location.href='dashboard.html'" style="margin-top:8px;">Back to Dashboard</button>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="dashboard.html" class="nav-logo">
+    <div class="bolt"></div>
+    Volt<span>IQ</span>
+  </a>
+  <div class="nav-right">
+    <div class="nav-owner-badge">
+      <div class="nav-owner-dot"></div>
+      <span id="ownerNameNav">Station Owner</span>
+    </div>
+    <button class="btn-ghost btn-logout" onclick="handleLogout()">Log Out</button>
+  </div>
+</nav>
+
+<!-- MAIN OWNER PAGE -->
+<div class="owner-page" id="ownerPage">
+  <div class="owner-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-station-info">
+        <div class="ssi-name" id="sidebarStationName">Loading...</div>
+        <div class="ssi-status">
+          <div class="ssi-dot active" id="sidebarStatusDot"></div>
+          <span id="sidebarStatusText" style="color:var(--muted)">ONLINE</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="margin-top:20px;">
+        <div class="sidebar-label">Management</div>
+        <div class="sidebar-item active" onclick="showPanel('overview',this)">
+          <span class="si-icon">📊</span> Overview
+        </div>
+        <div class="sidebar-item" onclick="showPanel('details',this)">
+          <span class="si-icon">📍</span> Station Details
+        </div>
+        <div class="sidebar-item" onclick="showPanel('telemetry',this)">
+          <span class="si-icon">⚡</span> Live Telemetry
+        </div>
+        <div class="sidebar-item" onclick="showPanel('chargers',this)">
+          <span class="si-icon">🔌</span> Chargers & Pricing
+        </div>
+        <div class="sidebar-item" onclick="showPanel('hours',this)">
+          <span class="si-icon">🕐</span> Hours & Contact
+        </div>
+        <div class="sidebar-item" onclick="showPanel('history',this)">
+          <span class="si-icon">📋</span> Update History
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Quick Links</div>
+        <div class="sidebar-item" onclick="window.location.href='dashboard.html'">
+          <span class="si-icon">🏠</span> Dashboard
+        </div>
+        <div class="sidebar-item" onclick="window.location.href='pricing.html'">
+          <span class="si-icon">💰</span> My Subscription
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="owner-main">
+
+      <!-- ═══ OVERVIEW PANEL ═══ -->
+      <div class="panel active" id="panel-overview">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Owner Panel</div>
+          <div class="panel-title">Station <em>Overview</em></div>
+          <div class="panel-desc">Live stats for your station. Data updates every 5 seconds.</div>
+        </div>
+
+        <!-- Live stats -->
+        <div class="live-stats">
+          <div class="live-stat">
+            <div class="ls-label">Current Load</div>
+            <div class="ls-value e" id="ovLoad">—%</div>
+            <div class="ls-live"><div class="ls-dot"></div>LIVE</div>
+          </div>
+          <div class="live-stat">
+            <div class="ls-label">Sessions Today</div>
+            <div class="ls-value v" id="ovSessions">—</div>
+            <div class="ls-live"><div class="ls-dot"></div>LIVE</div>
+          </div>
+          <div class="live-stat">
+            <div class="ls-label">Energy Delivered</div>
+            <div class="ls-value a" id="ovEnergy">— kWh</div>
+            <div class="ls-live"><div class="ls-dot"></div>LIVE</div>
+          </div>
+          <div class="live-stat">
+            <div class="ls-label">Revenue Today</div>
+            <div class="ls-value p" id="ovRevenue">₹—</div>
+            <div class="ls-live"><div class="ls-dot"></div>LIVE</div>
+          </div>
+        </div>
+
+        <!-- Station summary card -->
+        <div class="card">
+          <div class="card-title">Station Summary</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Station Name</label>
+              <input type="text" id="ovName" readonly style="opacity:0.7;cursor:default;">
+            </div>
+            <div class="form-group">
+              <label>Current Status</label>
+              <input type="text" id="ovStatus" readonly style="opacity:0.7;cursor:default;">
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="ovCity" readonly style="opacity:0.7;cursor:default;">
+            </div>
+            <div class="form-group">
+              <label>Chargers</label>
+              <input type="text" id="ovChargers" readonly style="opacity:0.7;cursor:default;">
+            </div>
+          </div>
+          <div style="margin-top:16px;text-align:right;">
+            <button class="btn-save" onclick="showPanel('details',null)">Edit Station Details →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STATION DETAILS PANEL ═══ -->
+      <div class="panel" id="panel-details">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Station Info</div>
+          <div class="panel-title">Station <em>Details</em></div>
+          <div class="panel-desc">Update your station's name, address, and location information.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Basic Information</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Station Name</label>
+              <input type="text" id="detName" placeholder="e.g. VoltIQ Hub — Pune Central">
+            </div>
+            <div class="form-group full">
+              <label>Full Address</label>
+              <input type="text" id="detAddress" placeholder="e.g. 42, FC Road, Shivajinagar">
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="detCity" placeholder="e.g. Pune">
+            </div>
+            <div class="form-group">
+              <label>State</label>
+              <select id="detState">
+                <option value="">Select State</option>
+                <option>Maharashtra</option>
+                <option>Karnataka</option>
+                <option>Tamil Nadu</option>
+                <option>Delhi</option>
+                <option>Gujarat</option>
+                <option>Rajasthan</option>
+                <option>Uttar Pradesh</option>
+                <option>West Bengal</option>
+                <option>Telangana</option>
+                <option>Andhra Pradesh</option>
+                <option>Kerala</option>
+                <option>Madhya Pradesh</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Latitude</label>
+              <input type="number" id="detLat" placeholder="e.g. 18.5204" step="0.0001">
+            </div>
+            <div class="form-group">
+              <label>Longitude</label>
+              <input type="number" id="detLng" placeholder="e.g. 73.8567" step="0.0001">
+              <span class="form-hint">Find coordinates at maps.google.com → right click on location</span>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-save" id="saveDetailsBtn" onclick="saveDetails()">Save Details</button>
+          </div>
+          <div class="form-msg" id="detailsMsg"></div>
+        </div>
+      </div>
+
+      <!-- ═══ TELEMETRY PANEL ═══ -->
+      <div class="panel" id="panel-telemetry">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Live Data</div>
+          <div class="panel-title">Push <em>Telemetry</em></div>
+          <div class="panel-desc">Update your station's real-time status and power load visible to all users on the map.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Station Status</div>
+          <div class="status-selector" id="statusSelector">
+            <div class="status-opt sel-active" data-status="active" onclick="selectStatus('active',this)">
+              <span class="so-icon">🟢</span>
+              <span class="so-label" style="color:var(--volt)">ONLINE</span>
+            </div>
+            <div class="status-opt" data-status="busy" onclick="selectStatus('busy',this)">
+              <span class="so-icon">🟡</span>
+              <span class="so-label" style="color:var(--amber)">BUSY</span>
+            </div>
+            <div class="status-opt" data-status="offline" onclick="selectStatus('offline',this)">
+              <span class="so-icon">🔴</span>
+              <span class="so-label" style="color:var(--red)">OFFLINE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Power Load</div>
+          <div class="load-slider-wrap">
+            <input type="range" class="load-slider" id="loadSlider" min="0" max="100" value="0" oninput="updateLoadDisplay(this.value)">
+            <div class="load-display">
+              <div class="load-value"><span id="loadVal">0</span>%</div>
+              <div class="load-bar-mini">
+                <div class="load-bar-fill" id="loadBarFill" style="width:0%"></div>
+              </div>
+              <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace" id="loadLabel">LOW</span>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-save" id="saveTelemetryBtn" onclick="saveTelemetry()">Push Telemetry</button>
+            <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace" id="lastPushed">Never pushed</span>
+          </div>
+          <div class="form-msg" id="telemetryMsg"></div>
+        </div>
+      </div>
+
+      <!-- ═══ CHARGERS & PRICING PANEL ═══ -->
+      <div class="panel" id="panel-chargers">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Equipment</div>
+          <div class="panel-title">Chargers & <em>Pricing</em></div>
+          <div class="panel-desc">Manage your charging equipment details and pricing visible to EV drivers.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Charger Setup</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Number of Chargers</label>
+              <input type="number" id="chgCount" min="1" max="200" placeholder="e.g. 12">
+            </div>
+            <div class="form-group">
+              <label>Pricing per kWh (₹)</label>
+              <input type="number" id="chgPrice" min="1" max="50" step="0.5" placeholder="e.g. 8.50">
+            </div>
+          </div>
+          <div style="margin-top:16px;">
+            <label style="font-size:10px;font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:10px;">Connector Types</label>
+            <div class="connector-tags" id="connectorTags">
+              <div class="connector-tag" onclick="toggleConnector(this,'CCS2')">CCS2</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'CHAdeMO')">CHAdeMO</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Type2 AC')">Type2 AC</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'GB/T DC')">GB/T DC</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'GB/T AC')">GB/T AC</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'3-Pin AC')">3-Pin AC</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'DC Fast')">DC Fast</div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-save" id="saveChargersBtn" onclick="saveChargers()">Save Charger Info</button>
+          </div>
+          <div class="form-msg" id="chargersMsg"></div>
+        </div>
+      </div>
+
+      <!-- ═══ HOURS & CONTACT PANEL ═══ -->
+      <div class="panel" id="panel-hours">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Availability</div>
+          <div class="panel-title">Hours & <em>Contact</em></div>
+          <div class="panel-desc">Set your operating hours and contact details shown on your station profile.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Operating Hours</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Hours Description</label>
+              <input type="text" id="hrsDesc" placeholder="e.g. 24/7 or Mon-Sat 8AM-10PM">
+            </div>
+            <div class="form-group">
+              <label>Opens At</label>
+              <input type="time" id="hrsOpen">
+            </div>
+            <div class="form-group">
+              <label>Closes At</label>
+              <input type="time" id="hrsClose">
+            </div>
+            <div class="form-group full">
+              <label>Special Notes (optional)</label>
+              <textarea id="hrsNotes" placeholder="e.g. Closed on national holidays. Last slot at 9:45PM."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Contact Information</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Contact Name</label>
+              <input type="text" id="ctcName" placeholder="Your name or manager name">
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="ctcPhone" placeholder="+91 98765 43210">
+            </div>
+            <div class="form-group full">
+              <label>Contact Email</label>
+              <input type="email" id="ctcEmail" placeholder="station@yourdomain.com">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-save" id="saveHoursBtn" onclick="saveHoursContact()">Save Hours & Contact</button>
+          </div>
+          <div class="form-msg" id="hoursMsg"></div>
+        </div>
+      </div>
+
+      <!-- ═══ UPDATE HISTORY PANEL ═══ -->
+      <div class="panel" id="panel-history">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Audit Log</div>
+          <div class="panel-title">Update <em>History</em></div>
+          <div class="panel-desc">A log of all changes made to your station data.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Updates</div>
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Field Updated</th>
+                <th>New Value</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;font-family:'Space Mono',monospace;font-size:11px;">No updates yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- end owner-main -->
+  </div><!-- end owner-layout -->
+</div><!-- end owner-page -->
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDhC7n1OHawDfcOC0HvA5C80vmjJIYN90g",
+  authDomain:"voltiq-93b13.firebaseapp.com",
+  projectId:"voltiq-93b13",
+  storageBucket:"voltiq-93b13.firebasestorage.app",
+  messagingSenderId:"457577167750",
+  appId:"1:457577167750:web:29a9024e7d8bd6f96fca07"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── STATE ── */
+let currentUser  = null;
+let currentOwner = null;
+let stationDoc   = null;
+let stationRef   = null;
+let selectedStatus = 'active';
+let historyLog = [];
+
+/* ── TOAST ── */
+function showToast(msg, type='info'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+(type==='success'?'success':type==='error'?'error':'');
+  setTimeout(()=>t.className='toast',3200);
+}
+
+/* ── AUTH CHECK ── */
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    document.getElementById('accessDenied').style.display='flex';
+    return;
+  }
+  currentUser = user;
+
+  // Load user profile
+  const userSnap = await getDoc(doc(db,'users',user.uid));
+  if(!userSnap.exists()){
+    document.getElementById('accessDenied').style.display='flex';
+    return;
+  }
+
+  currentOwner = userSnap.data();
+
+  // Role check — must be station_owner
+  if(currentOwner.role !== 'station_owner'){
+    document.getElementById('accessDenied').style.display='flex';
+    return;
+  }
+
+  // Pending approval check
+  if(currentOwner.status === 'pending'){
+    document.getElementById('pendingScreen').style.display='flex';
+    return;
+  }
+
+  // Load station — owner can only access their own station
+  // Station doc ID is uid_station (set during signup)
+  stationRef = doc(db,'stations', user.uid+'_station');
+  const stationSnap = await getDoc(stationRef);
+
+  if(!stationSnap.exists()){
+    showToast('Station not found. Contact admin.','error');
+    document.getElementById('accessDenied').style.display='flex';
+    return;
+  }
+
+  stationDoc = stationSnap.data();
+
+  // Show the panel
+  document.getElementById('ownerPage').style.display='block';
+  document.getElementById('ownerNameNav').textContent = currentOwner.name||'Owner';
+
+  populateAllFields();
+  startLiveStats();
+  loadHistory();
+});
+
+/* ── POPULATE ALL FIELDS ── */
+function populateAllFields(){
+  const s = stationDoc;
+
+  // Sidebar
+  document.getElementById('sidebarStationName').textContent = s.name||'Your Station';
+  const dot = document.getElementById('sidebarStatusDot');
+  dot.className = 'ssi-dot '+(s.status||'active');
+  document.getElementById('sidebarStatusText').textContent = (s.status||'active').toUpperCase();
+
+  // Overview
+  document.getElementById('ovName').value     = s.name||'';
+  document.getElementById('ovStatus').value   = (s.status||'active').toUpperCase();
+  document.getElementById('ovCity').value     = s.city||'';
+  document.getElementById('ovChargers').value = (s.chargerCount||0)+' units';
+
+  // Details
+  document.getElementById('detName').value    = s.name||'';
+  document.getElementById('detAddress').value = s.address||'';
+  document.getElementById('detCity').value    = s.city||'';
+  document.getElementById('detState').value   = s.state||'';
+  document.getElementById('detLat').value     = s.lat||'';
+  document.getElementById('detLng').value     = s.lng||'';
+
+  // Telemetry
+  const load = s.powerLoad||0;
+  document.getElementById('loadSlider').value = load;
+  updateLoadDisplay(load);
+  selectedStatus = s.status||'active';
+  document.querySelectorAll('.status-opt').forEach(o=>{
+    o.classList.remove('sel-active','sel-busy','sel-offline');
+    if(o.dataset.status===selectedStatus) o.classList.add('sel-'+selectedStatus);
+  });
+
+  // Chargers
+  document.getElementById('chgCount').value = s.chargerCount||'';
+  document.getElementById('chgPrice').value = s.pricingKwh||'';
+  if(s.connectors){
+    const list = s.connectors.split(',').map(c=>c.trim());
+    document.querySelectorAll('.connector-tag').forEach(tag=>{
+      if(list.includes(tag.textContent.trim())) tag.classList.add('selected');
+    });
+  }
+
+  // Hours & Contact
+  document.getElementById('hrsDesc').value  = s.operatingHours||'';
+  document.getElementById('ctcName').value  = s.ownerName||currentOwner?.name||'';
+  document.getElementById('ctcPhone').value = s.contactPhone||'';
+  document.getElementById('ctcEmail').value = s.contactEmail||currentOwner?.email||'';
+}
+
+/* ── LIVE STATS (simulated, update from stationDoc base) ── */
+function startLiveStats(){
+  function update(){
+    const baseLoad = stationDoc?.powerLoad||Math.round(Math.random()*60+20);
+    const load     = Math.min(100, Math.max(0, baseLoad + Math.round((Math.random()-0.5)*6)));
+    const sessions = Math.round(40+Math.random()*120);
+    const energy   = +(sessions*(Math.random()*15+8)).toFixed(1);
+    const price    = stationDoc?.pricingKwh||8.5;
+    const revenue  = Math.round(energy*price*sessions*0.01);
+
+    document.getElementById('ovLoad').textContent    = load+'%';
+    document.getElementById('ovSessions').textContent = sessions;
+    document.getElementById('ovEnergy').textContent  = energy+' kWh';
+    document.getElementById('ovRevenue').textContent = '₹'+revenue.toLocaleString();
+  }
+  update();
+  setInterval(update, 5000);
+}
+
+/* ── SIDEBAR NAVIGATION ── */
+window.showPanel = function(name, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  else {
+    // find and activate matching sidebar item
+    document.querySelectorAll('.sidebar-item').forEach(i=>{
+      if(i.getAttribute('onclick')?.includes("'"+name+"'")) i.classList.add('active');
+    });
+  }
+};
+
+/* ── STATUS SELECTOR ── */
+window.selectStatus = function(status, el){
+  selectedStatus = status;
+  document.querySelectorAll('.status-opt').forEach(o=>o.classList.remove('sel-active','sel-busy','sel-offline'));
+  el.classList.add('sel-'+status);
+};
+
+/* ── LOAD DISPLAY ── */
+window.updateLoadDisplay = function(val){
+  val = parseInt(val);
+  document.getElementById('loadVal').textContent   = val;
+  document.getElementById('loadBarFill').style.width = val+'%';
+  const fill = document.getElementById('loadBarFill');
+  if(val>80){ fill.style.background=`var(--red)`; fill.style.boxShadow=`0 0 6px rgba(255,23,68,0.5)`; }
+  else if(val>50){ fill.style.background=`var(--amber)`; fill.style.boxShadow=`0 0 6px rgba(255,171,0,0.5)`; }
+  else { fill.style.background=`var(--volt)`; fill.style.boxShadow=`0 0 6px rgba(118,255,3,0.5)`; }
+  document.getElementById('loadLabel').textContent = val>80?'HIGH':val>50?'MEDIUM':'LOW';
+};
+
+/* ── CONNECTOR TOGGLE ── */
+window.toggleConnector = function(el, name){
+  el.classList.toggle('selected');
+};
+
+function getSelectedConnectors(){
+  return Array.from(document.querySelectorAll('.connector-tag.selected'))
+    .map(t=>t.textContent.trim()).join(', ');
+}
+
+/* ── LOG UPDATE ── */
+async function logUpdate(field, value){
+  const entry = {
+    ownerId: currentUser.uid,
+    stationId: currentUser.uid+'_station',
+    field,
+    value: String(value),
+    timestamp: new Date().toISOString()
+  };
+  historyLog.unshift(entry);
+  try { await addDoc(collection(db,'station_updates'), entry); } catch(e){}
+  renderHistory();
+}
+
+/* ── SAVE DETAILS ── */
+window.saveDetails = async function(){
+  const btn = document.getElementById('saveDetailsBtn');
+  const msg = document.getElementById('detailsMsg');
+  msg.className='form-msg';
+  const name    = document.getElementById('detName').value.trim();
+  const address = document.getElementById('detAddress').value.trim();
+  const city    = document.getElementById('detCity').value.trim();
+  const state   = document.getElementById('detState').value;
+  const lat     = parseFloat(document.getElementById('detLat').value)||null;
+  const lng     = parseFloat(document.getElementById('detLng').value)||null;
+
+  if(!name||!address||!city){ msg.className='form-msg error'; msg.textContent='Name, address and city are required.'; return; }
+
+  btn.disabled=true; btn.textContent='Saving...';
+  try {
+    await updateDoc(stationRef,{ name, address, city, state, lat, lng, updatedAt: new Date().toISOString() });
+    stationDoc = {...stationDoc, name, address, city, state, lat, lng};
+    document.getElementById('sidebarStationName').textContent = name;
+    document.getElementById('ovName').value = name;
+    document.getElementById('ovCity').value = city;
+    await logUpdate('Station Details', name+' · '+city);
+    msg.className='form-msg success'; msg.textContent='Station details saved successfully!';
+    showToast('Details updated!','success');
+  } catch(e){ msg.className='form-msg error'; msg.textContent='Failed to save. Try again.'; }
+  btn.disabled=false; btn.textContent='Save Details';
+};
+
+/* ── SAVE TELEMETRY ── */
+window.saveTelemetry = async function(){
+  const btn = document.getElementById('saveTelemetryBtn');
+  const msg = document.getElementById('telemetryMsg');
+  msg.className='form-msg';
+  const load = parseInt(document.getElementById('loadSlider').value);
+
+  btn.disabled=true; btn.textContent='Pushing...';
+  try {
+    await updateDoc(stationRef,{ status: selectedStatus, powerLoad: load, lastTelemetry: new Date().toISOString() });
+    stationDoc = {...stationDoc, status: selectedStatus, powerLoad: load};
+    // Update sidebar
+    const dot = document.getElementById('sidebarStatusDot');
+    dot.className = 'ssi-dot '+selectedStatus;
+    document.getElementById('sidebarStatusText').textContent = selectedStatus.toUpperCase();
+    document.getElementById('ovStatus').value = selectedStatus.toUpperCase();
+    document.getElementById('lastPushed').textContent = 'Pushed: '+new Date().toLocaleTimeString();
+    await logUpdate('Telemetry', selectedStatus+' / '+load+'% load');
+    msg.className='form-msg success'; msg.textContent='Telemetry pushed to the VoltIQ grid!';
+    showToast('Telemetry live on grid ⚡','success');
+  } catch(e){ msg.className='form-msg error'; msg.textContent='Failed to push telemetry. Try again.'; }
+  btn.disabled=false; btn.textContent='Push Telemetry';
+};
+
+/* ── SAVE CHARGERS ── */
+window.saveChargers = async function(){
+  const btn = document.getElementById('saveChargersBtn');
+  const msg = document.getElementById('chargersMsg');
+  msg.className='form-msg';
+  const count    = parseInt(document.getElementById('chgCount').value)||0;
+  const price    = parseFloat(document.getElementById('chgPrice').value)||0;
+  const connectors = getSelectedConnectors();
+
+  if(!count||count<1){ msg.className='form-msg error'; msg.textContent='Please enter a valid charger count.'; return; }
+  if(!price||price<1){ msg.className='form-msg error'; msg.textContent='Please enter a valid price per kWh.'; return; }
+  if(!connectors){ msg.className='form-msg error'; msg.textContent='Please select at least one connector type.'; return; }
+
+  btn.disabled=true; btn.textContent='Saving...';
+  try {
+    await updateDoc(stationRef,{ chargerCount: count, pricingKwh: price, connectors, updatedAt: new Date().toISOString() });
+    stationDoc = {...stationDoc, chargerCount: count, pricingKwh: price, connectors};
+    document.getElementById('ovChargers').value = count+' units';
+    await logUpdate('Chargers & Pricing', count+' chargers · ₹'+price+'/kWh · '+connectors);
+    msg.className='form-msg success'; msg.textContent='Charger info saved!';
+    showToast('Charger info updated!','success');
+  } catch(e){ msg.className='form-msg error'; msg.textContent='Failed to save. Try again.'; }
+  btn.disabled=false; btn.textContent='Save Charger Info';
+};
+
+/* ── SAVE HOURS & CONTACT ── */
+window.saveHoursContact = async function(){
+  const btn = document.getElementById('saveHoursBtn');
+  const msg = document.getElementById('hoursMsg');
+  msg.className='form-msg';
+  const hours  = document.getElementById('hrsDesc').value.trim();
+  const open   = document.getElementById('hrsOpen').value;
+  const close  = document.getElementById('hrsClose').value;
+  const notes  = document.getElementById('hrsNotes').value.trim();
+  const cName  = document.getElementById('ctcName').value.trim();
+  const cPhone = document.getElementById('ctcPhone').value.trim();
+  const cEmail = document.getElementById('ctcEmail').value.trim();
+
+  if(!hours){ msg.className='form-msg error'; msg.textContent='Please enter operating hours.'; return; }
+  if(!cName||!cEmail){ msg.className='form-msg error'; msg.textContent='Contact name and email are required.'; return; }
+
+  btn.disabled=true; btn.textContent='Saving...';
+  try {
+    await updateDoc(stationRef,{
+      operatingHours: hours, opensAt: open, closesAt: close,
+      operatingNotes: notes,
+      ownerName: cName, contactPhone: cPhone, contactEmail: cEmail,
+      updatedAt: new Date().toISOString()
+    });
+    stationDoc = {...stationDoc, operatingHours: hours, ownerName: cName, contactPhone: cPhone, contactEmail: cEmail};
+    await logUpdate('Hours & Contact', hours+' · '+cName);
+    msg.className='form-msg success'; msg.textContent='Hours and contact info saved!';
+    showToast('Contact info updated!','success');
+  } catch(e){ msg.className='form-msg error'; msg.textContent='Failed to save. Try again.'; }
+  btn.disabled=false; btn.textContent='Save Hours & Contact';
+};
+
+/* ── HISTORY ── */
+async function loadHistory(){
+  try {
+    const snap = await getDocs(query(
+      collection(db,'station_updates'),
+      where('ownerId','==',currentUser.uid),
+      orderBy('timestamp','desc')
+    ));
+    if(!snap.empty) historyLog = snap.docs.map(d=>d.data());
+  } catch(e){}
+  renderHistory();
+}
+
+function renderHistory(){
+  const tbody = document.getElementById('historyTableBody');
+  if(!historyLog.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;font-family:\'Space Mono\',monospace;font-size:11px;">No updates yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = historyLog.slice(0,20).map(h=>{
+    const d = new Date(h.timestamp);
+    const dateStr = d.toLocaleDateString('en-IN')+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    return `<tr>
+      <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">${dateStr}</td>
+      <td style="color:var(--electric);font-size:12px">${h.field}</td>
+      <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.value}</td>
+      <td><span style="background:rgba(118,255,3,0.1);border:1px solid rgba(118,255,3,0.2);color:var(--volt);font-size:10px;font-family:'Space Mono',monospace;padding:2px 8px;border-radius:10px">SAVED</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── LOGOUT ── */
+window.handleLogout = async function(){
+  await signOut(auth);
+  showToast('Logged out.','success');
+  setTimeout(()=>window.location.href='login.html',800);
+};
+
+</script>
+</body>
+</html>

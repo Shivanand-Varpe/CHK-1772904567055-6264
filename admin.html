@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoltIQ — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#040b14; --bg2:#071220; --bg3:#0a1929;
+  --electric:#00e5ff; --volt:#76ff03; --amber:#ffab00;
+  --red:#ff1744; --purple:#b388ff;
+  --surface:rgba(0,229,255,0.04); --border:rgba(0,229,255,0.12);
+  --text:#e0f7fa; --muted:#607d8b;
+  --admin:#ffab00;
+  --radius:4px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:300;overflow-x:hidden;line-height:1.5;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.35;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--amber);border-radius:2px;}
+
+@keyframes pulse-bolt{0%,100%{filter:drop-shadow(0 0 8px var(--electric));}50%{filter:drop-shadow(0 0 20px var(--electric)) drop-shadow(0 0 36px var(--electric));}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(200%);}}
+@keyframes grid-shift{0%{transform:translateY(0);}100%{transform:translateY(60px);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes amber-pulse{0%,100%{box-shadow:0 0 16px rgba(255,171,0,0.15);}50%{box-shadow:0 0 40px rgba(255,171,0,0.35);}}
+
+/* BG */
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(255,171,0,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,171,0,0.02) 1px,transparent 1px);background-size:60px 60px;animation:grid-shift 20s linear infinite;pointer-events:none;z-index:0;}
+.glow-1{position:fixed;width:600px;height:600px;background:radial-gradient(circle,rgba(255,171,0,0.06) 0%,transparent 70%);top:-200px;right:-200px;pointer-events:none;z-index:0;}
+.glow-2{position:fixed;width:400px;height:400px;background:radial-gradient(circle,rgba(0,229,255,0.04) 0%,transparent 70%);bottom:-100px;left:-100px;pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:68px;background:rgba(4,11,20,0.94);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,171,0,0.12);}
+.nav-logo{display:flex;align-items:center;gap:12px;font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:0.02em;}
+.nav-logo .bolt{width:32px;height:32px;background:var(--electric);clip-path:polygon(60% 0%,40% 45%,70% 45%,30% 100%,55% 55%,25% 55%);filter:drop-shadow(0 0 8px var(--electric));animation:pulse-bolt 2s ease-in-out infinite;flex-shrink:0;}
+.nav-logo span{color:var(--electric);}
+.nav-admin-badge{display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(255,171,0,0.08);border:1px solid rgba(255,171,0,0.25);border-radius:20px;font-size:11px;font-family:'Space Mono',monospace;color:var(--amber);animation:amber-pulse 3s ease-in-out infinite;}
+.nav-admin-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);animation:blink 1.5s infinite;}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.btn-ghost{padding:8px 18px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:500;cursor:pointer;letter-spacing:0.06em;transition:all 0.2s;font-family:'Inter',sans-serif;border-radius:var(--radius);}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber);background:rgba(255,171,0,0.05);}
+.btn-logout{border-color:rgba(255,23,68,0.3)!important;color:var(--red)!important;}
+.btn-logout:hover{border-color:var(--red)!important;background:rgba(255,23,68,0.05)!important;color:var(--red)!important;}
+
+/* ACCESS DENIED */
+.access-denied{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:800;flex-direction:column;gap:20px;text-align:center;padding:32px;}
+.access-denied.show{display:flex;}
+.access-denied .ad-icon{font-size:56px;}
+.access-denied h2{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.05em;}
+.access-denied p{color:var(--muted);font-size:14px;max-width:400px;line-height:1.6;}
+.btn-goto{padding:12px 32px;background:var(--electric);border:none;color:#000;font-size:13px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:0.1em;text-transform:uppercase;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;margin-top:8px;}
+.btn-goto:hover{box-shadow:0 0 24px rgba(0,229,255,0.4);}
+
+/* ADMIN PAGE */
+.admin-page{padding-top:68px;min-height:100vh;position:relative;z-index:1;display:none;}
+.admin-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 68px);}
+
+/* SIDEBAR */
+.sidebar{background:var(--bg2);border-right:1px solid rgba(255,171,0,0.08);padding:28px 0;position:sticky;top:68px;height:calc(100vh - 68px);overflow-y:auto;}
+.sidebar-heading{padding:0 20px 16px;font-size:9px;font-family:'Space Mono',monospace;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:all 0.2s;font-size:13px;color:var(--muted);font-weight:500;position:relative;}
+.sidebar-item:hover{background:rgba(255,171,0,0.05);color:var(--text);}
+.sidebar-item.active{background:rgba(255,171,0,0.08);color:var(--amber);border-right:2px solid var(--amber);}
+.sidebar-item .si-icon{font-size:15px;flex-shrink:0;}
+.sidebar-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-family:'Space Mono',monospace;padding:2px 7px;border-radius:10px;font-weight:700;}
+.sidebar-divider{height:1px;background:var(--border);margin:12px 0;}
+
+/* MAIN */
+.admin-main{padding:40px 48px;overflow-y:auto;}
+.panel{display:none;animation:fadeUp 0.4s ease forwards;}
+.panel.active{display:block;}
+
+/* PANEL HEADER */
+.panel-header{margin-bottom:32px;}
+.panel-eyebrow{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.panel-eyebrow::before{content:'';width:24px;height:1px;background:var(--amber);}
+.panel-title{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;text-transform:uppercase;color:#fff;letter-spacing:-0.01em;line-height:1.05;}
+.panel-title em{color:var(--amber);font-style:normal;}
+.panel-desc{color:var(--muted);font-size:14px;margin-top:8px;line-height:1.6;}
+
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;position:relative;overflow:hidden;transition:border-color 0.3s;}
+.stat-box:hover{border-color:rgba(255,171,0,0.25);}
+.stat-box::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.stat-box:nth-child(1)::after{background:var(--electric);}
+.stat-box:nth-child(2)::after{background:var(--volt);}
+.stat-box:nth-child(3)::after{background:var(--amber);}
+.stat-box:nth-child(4)::after{background:var(--red);}
+.stat-box::before{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,171,0,0.02),transparent);animation:shimmer 5s infinite;}
+.sb-label{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+.sb-value{font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;color:#fff;line-height:1;}
+.sb-value.e{color:var(--electric);}
+.sb-value.v{color:var(--volt);}
+.sb-value.a{color:var(--amber);}
+.sb-value.r{color:var(--red);}
+.sb-sub{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:4px;}
+
+/* DATA TABLE */
+.data-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:24px;}
+.data-card-header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.data-card-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:8px;}
+.data-card-title::before{content:'';width:16px;height:2px;background:var(--amber);}
+.search-input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;color:var(--text);font-size:12px;font-family:'Space Mono',monospace;outline:none;transition:border-color 0.2s;min-width:200px;}
+.search-input:focus{border-color:var(--amber);}
+.search-input::placeholder{color:var(--muted);opacity:0.6;}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:12px 20px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.data-table td{padding:13px 20px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(255,171,0,0.02);}
+.data-table .mono{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);}
+.data-table .truncate{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:0.06em;white-space:nowrap;}
+.badge-user{background:rgba(0,229,255,0.1);color:var(--electric);border:1px solid rgba(0,229,255,0.2);}
+.badge-owner{background:rgba(118,255,3,0.1);color:var(--volt);border:1px solid rgba(118,255,3,0.2);}
+.badge-admin{background:rgba(255,171,0,0.1);color:var(--amber);border:1px solid rgba(255,171,0,0.2);}
+.badge-active{background:rgba(118,255,3,0.08);color:var(--volt);border:1px solid rgba(118,255,3,0.15);}
+.badge-pending{background:rgba(255,171,0,0.08);color:var(--amber);border:1px solid rgba(255,171,0,0.2);}
+.badge-suspended{background:rgba(255,23,68,0.08);color:var(--red);border:1px solid rgba(255,23,68,0.2);}
+.badge-basic{background:rgba(96,125,139,0.1);color:var(--muted);border:1px solid var(--border);}
+.badge-pro{background:rgba(0,229,255,0.1);color:var(--electric);border:1px solid rgba(0,229,255,0.2);}
+.badge-online{background:rgba(118,255,3,0.08);color:var(--volt);border:1px solid rgba(118,255,3,0.15);}
+.badge-busy{background:rgba(255,171,0,0.08);color:var(--amber);border:1px solid rgba(255,171,0,0.2);}
+.badge-offline{background:rgba(255,23,68,0.08);color:var(--red);border:1px solid rgba(255,23,68,0.15);}
+
+/* ACTION BUTTONS */
+.action-row{display:flex;gap:6px;flex-wrap:wrap;}
+.act-btn{padding:4px 12px;border-radius:var(--radius);font-size:10px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;border:1px solid transparent;}
+.act-approve{background:rgba(118,255,3,0.1);color:var(--volt);border-color:rgba(118,255,3,0.2);}
+.act-approve:hover{background:rgba(118,255,3,0.2);border-color:var(--volt);}
+.act-reject{background:rgba(255,23,68,0.08);color:var(--red);border-color:rgba(255,23,68,0.2);}
+.act-reject:hover{background:rgba(255,23,68,0.15);border-color:var(--red);}
+.act-suspend{background:rgba(255,171,0,0.08);color:var(--amber);border-color:rgba(255,171,0,0.2);}
+.act-suspend:hover{background:rgba(255,171,0,0.15);border-color:var(--amber);}
+.act-delete{background:rgba(255,23,68,0.05);color:var(--red);border-color:rgba(255,23,68,0.15);}
+.act-delete:hover{background:rgba(255,23,68,0.12);border-color:var(--red);}
+.act-plan{background:rgba(0,229,255,0.06);color:var(--electric);border-color:rgba(0,229,255,0.15);}
+.act-plan:hover{background:rgba(0,229,255,0.12);border-color:var(--electric);}
+.act-unsuspend{background:rgba(118,255,3,0.06);color:var(--volt);border-color:rgba(118,255,3,0.15);}
+.act-unsuspend:hover{background:rgba(118,255,3,0.12);border-color:var(--volt);}
+
+/* EMPTY STATE */
+.empty-state{padding:40px;text-align:center;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.1em;}
+.empty-state .es-icon{font-size:32px;margin-bottom:12px;display:block;opacity:0.4;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(4,11,20,0.88);backdrop-filter:blur(12px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--bg2);border:1px solid rgba(255,171,0,0.2);border-radius:8px;padding:36px;width:420px;max-width:95vw;position:relative;box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 40px rgba(255,171,0,0.06);animation:fadeUp 0.3s ease forwards;}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;transition:color 0.2s;padding:4px;line-height:1;}
+.modal-close:hover{color:var(--amber);}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:6px;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:24px;font-family:'Space Mono',monospace;}
+.modal-form{display:flex;flex-direction:column;gap:14px;}
+.mf-group{display:flex;flex-direction:column;gap:5px;}
+.mf-group label{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+.mf-group select,.mf-group input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 13px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
+.mf-group select:focus,.mf-group input:focus{border-color:var(--amber);}
+.mf-group select option{background:var(--bg3);}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+.btn-modal-save{flex:1;padding:12px;background:var(--amber);border:none;color:#000;font-size:13px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:0.1em;text-transform:uppercase;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;}
+.btn-modal-save:hover{box-shadow:0 0 24px rgba(255,171,0,0.4);}
+.btn-modal-cancel{flex:1;padding:12px;background:transparent;border:1px solid var(--border);color:var(--text);font-size:12px;font-family:'Space Mono',monospace;letter-spacing:0.06em;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;}
+.btn-modal-cancel:hover{border-color:var(--amber);color:var(--amber);}
+
+/* CONFIRM MODAL */
+.confirm-modal{background:var(--bg2);border:1px solid rgba(255,23,68,0.2);border-radius:8px;padding:32px;width:380px;max-width:95vw;text-align:center;animation:fadeUp 0.3s ease forwards;}
+.confirm-icon{font-size:40px;margin-bottom:16px;}
+.confirm-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px;}
+.confirm-actions{display:flex;gap:10px;justify-content:center;}
+.btn-confirm-yes{padding:10px 28px;background:var(--red);border:none;color:#fff;font-size:12px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:0.1em;text-transform:uppercase;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;}
+.btn-confirm-yes:hover{box-shadow:0 0 20px rgba(255,23,68,0.4);}
+.btn-confirm-no{padding:10px 28px;background:transparent;border:1px solid var(--border);color:var(--text);font-size:12px;font-family:'Space Mono',monospace;border-radius:var(--radius);cursor:pointer;transition:all 0.2s;}
+.btn-confirm-no:hover{border-color:var(--muted);}
+
+/* REVENUE SECTION */
+.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.rev-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px;}
+.rev-label{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+.rev-value{font-family:'Rajdhani',sans-serif;font-size:42px;font-weight:700;color:var(--amber);line-height:1;}
+.rev-sub{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;max-width:300px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{border-color:rgba(118,255,3,0.3);color:var(--volt);}
+.toast.error{border-color:rgba(255,23,68,0.3);color:var(--red);}
+.toast.warn{border-color:rgba(255,171,0,0.3);color:var(--amber);}
+
+/* LOADING */
+.loading-row td{text-align:center;padding:28px;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;vertical-align:middle;}
+
+@media(max-width:900px){
+  nav{padding:0 20px;}
+  .admin-layout{grid-template-columns:1fr;}
+  .sidebar{position:static;height:auto;display:flex;overflow-x:auto;padding:10px;gap:4px;border-right:none;border-bottom:1px solid var(--border);}
+  .sidebar-heading{display:none;}
+  .sidebar-item{flex-shrink:0;padding:8px 14px;border-right:none!important;}
+  .sidebar-divider{display:none;}
+  .admin-main{padding:24px 20px;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .rev-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="glow-1"></div>
+<div class="glow-2"></div>
+<div class="toast" id="toast"></div>
+
+<!-- ACCESS DENIED -->
+<div class="access-denied" id="accessDenied">
+  <div class="ad-icon">🛡️</div>
+  <h2>Admin Access Only</h2>
+  <p>This panel is restricted to VoltIQ administrators only. Please log in with an admin account and the correct secret key.</p>
+  <button class="btn-goto" onclick="window.location.href='login.html'">Go to Login</button>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-msg" id="confirmMsg">This action cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn-confirm-yes" id="confirmYes">Confirm</button>
+      <button class="btn-confirm-no" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLAN CHANGE MODAL -->
+<div class="modal-overlay" id="planModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closePlanModal()">✕</button>
+    <div class="modal-title">Change User Plan</div>
+    <div class="modal-sub" id="planModalSub">Select a new plan for this user</div>
+    <div class="modal-form">
+      <div class="mf-group">
+        <label>New Plan</label>
+        <select id="planModalSelect">
+          <option value="basic">Basic — ₹300/mo</option>
+          <option value="pro">Pro — ₹500/mo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-save" id="planModalSave">Save Plan</button>
+      <button class="btn-modal-cancel" onclick="closePlanModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="dashboard.html" class="nav-logo">
+    <div class="bolt"></div>
+    Volt<span>IQ</span>
+  </a>
+  <div class="nav-right">
+    <div class="nav-admin-badge">
+      <div class="nav-admin-dot"></div>
+      <span id="adminNameNav">Admin</span>
+    </div>
+    <button class="btn-ghost btn-logout" onclick="handleLogout()">Log Out</button>
+  </div>
+</nav>
+
+<!-- ADMIN PAGE -->
+<div class="admin-page" id="adminPage">
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-heading">Admin Panel</div>
+
+      <div class="sidebar-item active" onclick="showPanel('overview',this)">
+        <span class="si-icon">📊</span> Overview
+      </div>
+      <div class="sidebar-item" onclick="showPanel('users',this)">
+        <span class="si-icon">👥</span> All Users
+      </div>
+      <div class="sidebar-item" onclick="showPanel('approvals',this)">
+        <span class="si-icon">⏳</span> Approvals
+        <span class="sidebar-badge" id="approvalsBadge">0</span>
+      </div>
+      <div class="sidebar-item" onclick="showPanel('stations',this)">
+        <span class="si-icon">⚡</span> Stations
+      </div>
+      <div class="sidebar-item" onclick="showPanel('subscriptions',this)">
+        <span class="si-icon">💰</span> Subscriptions
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-item" onclick="window.location.href='dashboard.html'">
+        <span class="si-icon">🏠</span> Dashboard
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="admin-main">
+
+      <!-- ═══ OVERVIEW ═══ -->
+      <div class="panel active" id="panel-overview">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Admin Control</div>
+          <div class="panel-title">System <em>Overview</em></div>
+          <div class="panel-desc">Live summary of the VoltIQ platform.</div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="sb-label">Total Users</div>
+            <div class="sb-value e" id="ovTotalUsers">—</div>
+            <div class="sb-sub" id="ovUsersSub">Loading...</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Stations</div>
+            <div class="sb-value v" id="ovStations">—</div>
+            <div class="sb-sub" id="ovStationsSub">Loading...</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Active Subscriptions</div>
+            <div class="sb-value a" id="ovSubs">—</div>
+            <div class="sb-sub" id="ovSubsSub">Loading...</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Pending Approvals</div>
+            <div class="sb-value r" id="ovPending">—</div>
+            <div class="sb-sub">Station owners awaiting review</div>
+          </div>
+        </div>
+
+        <!-- Revenue summary -->
+        <div class="rev-grid">
+          <div class="rev-card">
+            <div class="rev-label">Estimated Monthly Revenue</div>
+            <div class="rev-value" id="revMonthly">₹—</div>
+            <div class="rev-sub">Based on active subscriptions</div>
+          </div>
+          <div class="rev-card">
+            <div class="rev-label">Estimated Annual Revenue</div>
+            <div class="rev-value" id="revAnnual">₹—</div>
+            <div class="rev-sub">Projected at current subscription rate</div>
+          </div>
+        </div>
+
+        <!-- Recent signups -->
+        <div class="data-card">
+          <div class="data-card-header">
+            <div class="data-card-title">Recent Signups</div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Plan</th><th>Joined</th></tr></thead>
+            <tbody id="recentSignupsBody">
+              <tr class="loading-row"><td colspan="5"><span class="spinner"></span>Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ USERS ═══ -->
+      <div class="panel" id="panel-users">
+        <div class="panel-header">
+          <div class="panel-eyebrow">User Management</div>
+          <div class="panel-title">All <em>Users</em></div>
+          <div class="panel-desc">View all registered users, their roles, plans, and account status.</div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-header">
+            <div class="data-card-title">Users</div>
+            <input class="search-input" type="text" placeholder="Search by name or email..." id="userSearch" oninput="filterUsers()">
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Plan</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="usersTableBody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span>Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ APPROVALS ═══ -->
+      <div class="panel" id="panel-approvals">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Station Owners</div>
+          <div class="panel-title">Pending <em>Approvals</em></div>
+          <div class="panel-desc">Station owner registrations waiting for your review. Approve to activate their owner panel access.</div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-header">
+            <div class="data-card-title">Awaiting Review</div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Owner Name</th><th>Email</th><th>Station Name</th><th>Submitted</th><th>Actions</th></tr></thead>
+            <tbody id="approvalsTableBody">
+              <tr class="loading-row"><td colspan="5"><span class="spinner"></span>Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ STATIONS ═══ -->
+      <div class="panel" id="panel-stations">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Grid Network</div>
+          <div class="panel-title">All <em>Stations</em></div>
+          <div class="panel-desc">View, suspend, or delete any station across the network.</div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-header">
+            <div class="data-card-title">Stations</div>
+            <input class="search-input" type="text" placeholder="Search stations..." id="stationSearch" oninput="filterStations()">
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Station Name</th><th>Owner</th><th>City</th><th>Status</th><th>Load</th><th>Actions</th></tr></thead>
+            <tbody id="stationsTableBody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span>Loading stations...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ SUBSCRIPTIONS ═══ -->
+      <div class="panel" id="panel-subscriptions">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Billing</div>
+          <div class="panel-title">Subscription <em>Revenue</em></div>
+          <div class="panel-desc">All active subscriptions and revenue breakdown.</div>
+        </div>
+
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat-box">
+            <div class="sb-label">Basic Subscribers</div>
+            <div class="sb-value e" id="subBasicCount">—</div>
+            <div class="sb-sub">@ ₹300/mo</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Pro Subscribers</div>
+            <div class="sb-value a" id="subProCount">—</div>
+            <div class="sb-sub">@ ₹500/mo</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Total MRR</div>
+            <div class="sb-value v" id="subMRR">₹—</div>
+            <div class="sb-sub">Monthly Recurring Revenue</div>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="data-card-header">
+            <div class="data-card-title">All Subscriptions</div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Billing</th><th>Amount</th><th>Actions</th></tr></thead>
+            <tbody id="subsTableBody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span>Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- end admin-main -->
+  </div>
+</div><!-- end admin-page -->
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDhC7n1OHawDfcOC0HvA5C80vmjJIYN90g",
+  authDomain:"voltiq-93b13.firebaseapp.com",
+  projectId:"voltiq-93b13",
+  storageBucket:"voltiq-93b13.firebasestorage.app",
+  messagingSenderId:"457577167750",
+  appId:"1:457577167750:web:29a9024e7d8bd6f96fca07"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── STATE ── */
+let allUsers       = [];
+let allStations    = [];
+let allSubs        = [];
+let pendingOwners  = [];
+let confirmCallback = null;
+let planModalUid    = null;
+
+/* ── TOAST ── */
+function showToast(msg, type='info'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+(type==='success'?'success':type==='error'?'error':type==='warn'?'warn':'');
+  setTimeout(()=>t.className='toast',3200);
+}
+
+/* ── AUTH CHECK ── */
+onAuthStateChanged(auth, async user => {
+  if(!user){ document.getElementById('accessDenied').classList.add('show'); return; }
+
+  const snap = await getDoc(doc(db,'users',user.uid));
+  if(!snap.exists()){ document.getElementById('accessDenied').classList.add('show'); return; }
+
+  const data = snap.data();
+  if(data.role !== 'admin'){ document.getElementById('accessDenied').classList.add('show'); return; }
+
+  // ✅ Authorized
+  document.getElementById('adminPage').style.display='block';
+  document.getElementById('adminNameNav').textContent = data.name||'Admin';
+
+  // Load all data
+  await Promise.all([loadUsers(), loadStations(), loadSubscriptions()]);
+  buildOverview();
+});
+
+/* ── SIDEBAR NAV ── */
+window.showPanel = function(name, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+};
+
+/* ── FORMAT DATE ── */
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d=new Date(iso);
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+/* ════════════════════════════════════
+   LOAD DATA
+════════════════════════════════════ */
+async function loadUsers(){
+  try {
+    const snap = await getDocs(collection(db,'users'));
+    allUsers = snap.docs.map(d=>({id:d.id,...d.data()}));
+    pendingOwners = allUsers.filter(u=>u.role==='station_owner'&&u.status==='pending');
+  } catch(e){ allUsers=[]; }
+  renderUsers();
+  renderApprovals();
+  document.getElementById('approvalsBadge').textContent = pendingOwners.length||'0';
+}
+
+async function loadStations(){
+  try {
+    const snap = await getDocs(collection(db,'stations'));
+    allStations = snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ allStations=[]; }
+  renderStations();
+}
+
+async function loadSubscriptions(){
+  try {
+    const snap = await getDocs(collection(db,'subscriptions'));
+    allSubs = snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ allSubs=[]; }
+  renderSubscriptions();
+}
+
+/* ════════════════════════════════════
+   OVERVIEW
+════════════════════════════════════ */
+function buildOverview(){
+  const totalUsers  = allUsers.length;
+  const activeStations = allStations.filter(s=>s.approved).length;
+  const activeSubs  = allSubs.filter(s=>s.status==='active').length;
+  const pending     = pendingOwners.length;
+
+  document.getElementById('ovTotalUsers').textContent   = totalUsers;
+  document.getElementById('ovStations').textContent     = activeStations;
+  document.getElementById('ovSubs').textContent         = activeSubs;
+  document.getElementById('ovPending').textContent      = pending;
+
+  document.getElementById('ovUsersSub').textContent     = allUsers.filter(u=>u.role==='station_owner').length+' station owners';
+  document.getElementById('ovStationsSub').textContent  = allStations.filter(s=>s.status==='pending_approval').length+' pending approval';
+  document.getElementById('ovSubsSub').textContent      = allSubs.filter(s=>s.plan==='pro').length+' Pro · '+allSubs.filter(s=>s.plan==='basic').length+' Basic';
+
+  // Revenue
+  const mrr = allSubs.filter(s=>s.status==='active').reduce((sum,s)=>{
+    if(s.plan==='pro') return sum+(s.billing==='annual'?400:500);
+    return sum+(s.billing==='annual'?240:300);
+  },0);
+  document.getElementById('revMonthly').textContent = '₹'+mrr.toLocaleString('en-IN');
+  document.getElementById('revAnnual').textContent  = '₹'+(mrr*12).toLocaleString('en-IN');
+
+  // Recent signups
+  const recent = [...allUsers].sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).slice(0,6);
+  document.getElementById('recentSignupsBody').innerHTML = recent.length
+    ? recent.map(u=>`<tr>
+        <td>${u.name||'—'}</td>
+        <td class="mono truncate">${u.email||'—'}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td>${planBadge(u.plan)}</td>
+        <td class="mono">${fmtDate(u.createdAt)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="loading-row">No users yet.</td></tr>';
+}
+
+/* ════════════════════════════════════
+   USERS TABLE
+════════════════════════════════════ */
+function roleBadge(role){
+  if(role==='admin')         return '<span class="badge badge-admin">ADMIN</span>';
+  if(role==='station_owner') return '<span class="badge badge-owner">OWNER</span>';
+  return '<span class="badge badge-user">USER</span>';
+}
+function planBadge(plan){
+  if(plan==='pro') return '<span class="badge badge-pro">PRO</span>';
+  return '<span class="badge badge-basic">BASIC</span>';
+}
+function statusBadge(status){
+  if(status==='active')    return '<span class="badge badge-active">ACTIVE</span>';
+  if(status==='pending')   return '<span class="badge badge-pending">PENDING</span>';
+  if(status==='suspended') return '<span class="badge badge-suspended">SUSPENDED</span>';
+  return '<span class="badge badge-basic">'+status+'</span>';
+}
+
+function renderUsers(list){
+  const data = list||allUsers;
+  const tbody = document.getElementById('usersTableBody');
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="6" class="loading-row">No users found.</td></tr>'; return;
+  }
+  tbody.innerHTML = data.map(u=>`
+    <tr id="urow_${u.id}">
+      <td>${u.name||'—'}</td>
+      <td class="mono truncate">${u.email||'—'}</td>
+      <td>${roleBadge(u.role)}</td>
+      <td>${planBadge(u.plan||'basic')}</td>
+      <td>${statusBadge(u.status||'active')}</td>
+      <td>
+        <div class="action-row">
+          <button class="act-btn act-plan" onclick="openPlanModal('${u.id}','${u.name||u.email}','${u.plan||'basic'}')">Plan</button>
+          ${u.status==='suspended'
+            ? `<button class="act-btn act-unsuspend" onclick="changeUserStatus('${u.id}','active')">Unsuspend</button>`
+            : `<button class="act-btn act-suspend" onclick="changeUserStatus('${u.id}','suspended')">Suspend</button>`
+          }
+          ${u.role!=='admin'?`<button class="act-btn act-delete" onclick="confirmDeleteUser('${u.id}','${u.name||u.email}')">Delete</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+window.filterUsers = function(){
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  if(!q){ renderUsers(); return; }
+  renderUsers(allUsers.filter(u=>(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)));
+};
+
+/* ── CHANGE USER STATUS ── */
+window.changeUserStatus = async function(uid, status){
+  try {
+    await updateDoc(doc(db,'users',uid),{status});
+    const u = allUsers.find(x=>x.id===uid);
+    if(u) u.status=status;
+    renderUsers();
+    showToast('User '+status+'.','success');
+  } catch(e){ showToast('Failed to update user.','error'); }
+};
+
+/* ── DELETE USER ── */
+window.confirmDeleteUser = function(uid, name){
+  openConfirm('Delete User', `Delete "${name}"? This cannot be undone.`, '🗑️', async ()=>{
+    try {
+      await deleteDoc(doc(db,'users',uid));
+      allUsers = allUsers.filter(u=>u.id!==uid);
+      renderUsers();
+      buildOverview();
+      showToast('User deleted.','success');
+    } catch(e){ showToast('Failed to delete user.','error'); }
+  });
+};
+
+/* ════════════════════════════════════
+   APPROVALS
+════════════════════════════════════ */
+function renderApprovals(){
+  const tbody = document.getElementById('approvalsTableBody');
+  const pending = allUsers.filter(u=>u.role==='station_owner'&&u.status==='pending');
+  if(!pending.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty-state"><span class="es-icon">✅</span>NO PENDING APPROVALS</div></td></tr>'; return;
+  }
+  tbody.innerHTML = pending.map(u=>`
+    <tr id="arow_${u.id}">
+      <td>${u.name||'—'}</td>
+      <td class="mono">${u.email||'—'}</td>
+      <td>${u.stationName||'—'}</td>
+      <td class="mono">${fmtDate(u.createdAt)}</td>
+      <td>
+        <div class="action-row">
+          <button class="act-btn act-approve" onclick="approveOwner('${u.id}')">Approve</button>
+          <button class="act-btn act-reject"  onclick="rejectOwner('${u.id}','${u.name||u.email}')">Reject</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+window.approveOwner = async function(uid){
+  try {
+    await updateDoc(doc(db,'users',uid),{status:'active'});
+    // Also approve their station doc
+    await updateDoc(doc(db,'stations',uid+'_station'),{approved:true,status:'active'});
+    const u = allUsers.find(x=>x.id===uid);
+    if(u) u.status='active';
+    pendingOwners = pendingOwners.filter(p=>p.id!==uid);
+    document.getElementById('approvalsBadge').textContent = pendingOwners.length||'0';
+    renderApprovals();
+    renderUsers();
+    buildOverview();
+    showToast('Station owner approved! They can now log in.','success');
+  } catch(e){ showToast('Approval failed. Check Firestore rules.','error'); console.error(e); }
+};
+
+window.rejectOwner = function(uid, name){
+  openConfirm('Reject Application', `Reject "${name}"'s station owner application and delete their account?`, '❌', async ()=>{
+    try {
+      await updateDoc(doc(db,'users',uid),{status:'rejected'});
+      const u = allUsers.find(x=>x.id===uid);
+      if(u) u.status='rejected';
+      pendingOwners = pendingOwners.filter(p=>p.id!==uid);
+      document.getElementById('approvalsBadge').textContent = pendingOwners.length||'0';
+      renderApprovals();
+      renderUsers();
+      showToast('Application rejected.','warn');
+    } catch(e){ showToast('Failed to reject.','error'); }
+  });
+};
+
+/* ════════════════════════════════════
+   STATIONS
+════════════════════════════════════ */
+function renderStations(list){
+  const data = list||allStations;
+  const tbody = document.getElementById('stationsTableBody');
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><span class="es-icon">⚡</span>NO STATIONS FOUND</div></td></tr>'; return;
+  }
+  tbody.innerHTML = data.map(s=>{
+    const statusBadgeHtml = s.status==='active'?'<span class="badge badge-online">ONLINE</span>':
+      s.status==='busy'?'<span class="badge badge-busy">BUSY</span>':
+      s.status==='offline'?'<span class="badge badge-offline">OFFLINE</span>':
+      s.status==='pending_approval'?'<span class="badge badge-pending">PENDING</span>':
+      '<span class="badge badge-basic">'+s.status+'</span>';
+    const load = s.powerLoad||0;
+    const loadColor = load>80?'var(--red)':load>50?'var(--amber)':'var(--volt)';
+    return `<tr id="srow_${s.id}">
+      <td>${s.name||'—'}</td>
+      <td class="mono">${s.ownerName||'—'}</td>
+      <td>${s.city||'—'}</td>
+      <td>${statusBadgeHtml}</td>
+      <td><span style="font-family:'Space Mono',monospace;font-size:12px;color:${loadColor}">${load}%</span></td>
+      <td>
+        <div class="action-row">
+          ${s.status!=='offline'
+            ? `<button class="act-btn act-suspend" onclick="setStationStatus('${s.id}','offline')">Suspend</button>`
+            : `<button class="act-btn act-unsuspend" onclick="setStationStatus('${s.id}','active')">Reinstate</button>`
+          }
+          <button class="act-btn act-delete" onclick="confirmDeleteStation('${s.id}','${s.name||'this station'}')">Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.filterStations = function(){
+  const q=document.getElementById('stationSearch').value.toLowerCase();
+  if(!q){renderStations();return;}
+  renderStations(allStations.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.city||'').toLowerCase().includes(q)||(s.ownerName||'').toLowerCase().includes(q)));
+};
+
+window.setStationStatus = async function(stationId, status){
+  try {
+    await updateDoc(doc(db,'stations',stationId),{status});
+    const s=allStations.find(x=>x.id===stationId);
+    if(s) s.status=status;
+    renderStations();
+    showToast('Station status updated to '+status+'.','success');
+  } catch(e){ showToast('Failed to update station.','error'); }
+};
+
+window.confirmDeleteStation = function(stationId, name){
+  openConfirm('Delete Station', `Permanently delete "${name}"?`, '🗑️', async ()=>{
+    try {
+      await deleteDoc(doc(db,'stations',stationId));
+      allStations = allStations.filter(s=>s.id!==stationId);
+      renderStations();
+      buildOverview();
+      showToast('Station deleted.','success');
+    } catch(e){ showToast('Failed to delete station.','error'); }
+  });
+};
+
+/* ════════════════════════════════════
+   SUBSCRIPTIONS
+════════════════════════════════════ */
+function renderSubscriptions(){
+  const tbody = document.getElementById('subsTableBody');
+  const basic = allSubs.filter(s=>s.plan==='basic'&&s.status==='active').length;
+  const pro   = allSubs.filter(s=>s.plan==='pro'  &&s.status==='active').length;
+  const mrr   = basic*300 + pro*500;
+
+  document.getElementById('subBasicCount').textContent = basic;
+  document.getElementById('subProCount').textContent   = pro;
+  document.getElementById('subMRR').textContent        = '₹'+mrr.toLocaleString('en-IN');
+
+  if(!allSubs.length){
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><span class="es-icon">💰</span>NO SUBSCRIPTIONS YET</div></td></tr>'; return;
+  }
+  tbody.innerHTML = allSubs.map(s=>`
+    <tr>
+      <td>${s.name||'—'}</td>
+      <td class="mono truncate">${s.email||'—'}</td>
+      <td>${planBadge(s.plan)}</td>
+      <td class="mono">${s.billing||'monthly'}</td>
+      <td style="font-family:'Space Mono',monospace;color:var(--amber)">₹${(s.amount||0).toLocaleString('en-IN')}</td>
+      <td>
+        <div class="action-row">
+          <button class="act-btn act-plan" onclick="openPlanModal('${s.userId||s.id}','${s.name||s.email}','${s.plan}')">Change</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+/* ════════════════════════════════════
+   PLAN MODAL
+════════════════════════════════════ */
+window.openPlanModal = function(uid, name, currentPlan){
+  planModalUid = uid;
+  document.getElementById('planModalSub').textContent = 'Changing plan for: '+name;
+  document.getElementById('planModalSelect').value = currentPlan||'basic';
+  document.getElementById('planModal').classList.add('open');
+  document.getElementById('planModalSave').onclick = async ()=>{
+    const newPlan = document.getElementById('planModalSelect').value;
+    try {
+      await updateDoc(doc(db,'users',planModalUid),{plan:newPlan,planUpdatedAt:new Date().toISOString()});
+      // Also update subscriptions if exists
+      try { await updateDoc(doc(db,'subscriptions',planModalUid),{plan:newPlan,amount:newPlan==='pro'?500:300,updatedAt:new Date().toISOString()}); } catch(e){}
+      // Update local state
+      const u = allUsers.find(x=>x.id===planModalUid);
+      if(u) u.plan=newPlan;
+      const sub = allSubs.find(x=>(x.userId||x.id)===planModalUid);
+      if(sub){ sub.plan=newPlan; sub.amount=newPlan==='pro'?500:300; }
+      renderUsers();
+      renderSubscriptions();
+      buildOverview();
+      showToast('Plan changed to '+newPlan+'.','success');
+    } catch(e){ showToast('Failed to change plan.','error'); }
+    closePlanModal();
+  };
+};
+window.closePlanModal = function(){ document.getElementById('planModal').classList.remove('open'); };
+
+/* ════════════════════════════════════
+   CONFIRM DIALOG
+════════════════════════════════════ */
+function openConfirm(title, msg, icon, cb){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent   = msg;
+  document.getElementById('confirmIcon').textContent  = icon||'⚠️';
+  confirmCallback = cb;
+  document.getElementById('confirmOverlay').classList.add('open');
+  document.getElementById('confirmYes').onclick = ()=>{ closeConfirm(); if(confirmCallback) confirmCallback(); };
+}
+window.closeConfirm = function(){ document.getElementById('confirmOverlay').classList.remove('open'); };
+
+// Close modals on overlay click
+document.getElementById('confirmOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('confirmOverlay')) closeConfirm(); });
+document.getElementById('planModal').addEventListener('click',e=>{ if(e.target===document.getElementById('planModal')) closePlanModal(); });
+
+/* ── LOGOUT ── */
+window.handleLogout = async function(){
+  await signOut(auth);
+  showToast('Logged out.','success');
+  setTimeout(()=>window.location.href='login.html',800);
+};
+
+</script>
+</body>
+</html>
