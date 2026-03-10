@@ -268,6 +268,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:cen
         <div class="sidebar-item" onclick="showPanel('details',this)">
           <span class="si-icon">📍</span> Station Details
         </div>
+        <div class="sidebar-item" onclick="showPanel('profile',this)">
+          <span class="si-icon">🏢</span> Station Profile
+        </div>
         <div class="sidebar-item" onclick="showPanel('telemetry',this)">
           <span class="si-icon">⚡</span> Live Telemetry
         </div>
@@ -411,6 +414,195 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:cen
           </div>
           <div class="form-msg" id="detailsMsg"></div>
         </div>
+      </div>
+
+      <!-- ═══ STATION PROFILE PANEL ═══ -->
+      <div class="panel" id="panel-profile">
+        <div class="panel-header">
+          <div class="panel-eyebrow">Station Info</div>
+          <div class="panel-title">Station <em>Profile</em></div>
+          <div class="panel-desc">Comprehensive details about your station including amenities, accessibility, and special features.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Station Type & Capacity</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Station Type</label>
+              <select id="profileType">
+                <option value="">Select Station Type</option>
+                <option>Standalone Charging Hub</option>
+                <option>Petrol Pump</option>
+                <option>Shopping Mall</option>
+                <option>Office Building</option>
+                <option>Residential Complex</option>
+                <option>Highway Stop</option>
+                <option>Public Parking</option>
+                <option>Hotel/Resort</option>
+                <option>Hospital</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Total Charging Slots</label>
+              <input type="number" id="profileSlots" min="1" placeholder="Total number of charging slots">
+            </div>
+            <div class="form-group">
+              <label>Fast Charging Slots</label>
+              <input type="number" id="profileFastSlots" min="0" placeholder="Number of DC fast charging slots">
+            </div>
+            <div class="form-group">
+              <label>Slow Charging Slots</label>
+              <input type="number" id="profileSlowSlots" min="0" placeholder="Number of AC slow charging slots">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Station Amenities</div>
+          <div class="form-grid single">
+            <label style="font-size:10px;font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:10px;">Available Amenities</label>
+            <div class="connector-tags" id="amenitiesTags">
+              <div class="connector-tag" onclick="toggleConnector(this,'Free WiFi')">📶 WiFi</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Parking')">🅿️ Parking</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Restroom')">🚻 Restroom</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Café/Food')">☕ Café</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Waiting Area')">🪑 Wait Area</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Drinking Water')">💧 Water</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Phone Charging')">🔌 Phone Charge</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Vending Machine')">🏪 Vending</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'ATM')">💳 ATM</div>
+              <div class="connector-tag" onclick="toggleConnector(this,'Luggage Storage')">🧳 Storage</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Accessibility & Safety</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label style="font-size:10px;font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:10px;">Safety Features</label>
+              <div class="connector-tags">
+                <div class="connector-tag" onclick="toggleConnector(this,'CCTV')">📹 CCTV</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'LED Lighting')">💡 LED Light</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Security Personnel')">👮 Security</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'24/7 Monitoring')">👁️ 24/7 Monitor</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Fire Safety')">🧯 Fire Safety</div>
+              </div>
+            </div>
+            <div class="form-group full">
+              <label style="font-size:10px;font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:10px;">Accessibility Features</label>
+              <div class="connector-tags">
+                <div class="connector-tag" onclick="toggleConnector(this,'Wheelchair Access')">♿ Wheelchair</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Disabled Parking')">🅿️ Disabled Park</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Ramp Entry')">🛣️ Ramp</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Ground Level')">1️⃣ Ground Level</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Assistance Available')">🤝 Assistance</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Electrical & Technical Info</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Total Power Capacity (kVA)</label>
+              <input type="number" id="profilePowerKva" min="1" placeholder="e.g. 100">
+            </div>
+            <div class="form-group">
+              <label>Grid Connection Type</label>
+              <select id="profileGridType">
+                <option value="">Select Grid Type</option>
+                <option>Three Phase (400V)</option>
+                <option>Single Phase (230V)</option>
+                <option>Solar with Grid Backup</option>
+                <option>Pure Solar</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Network Uptime SLA (%)</label>
+              <input type="number" id="profileUptime" min="0" max="100" step="0.1" placeholder="e.g. 99.5">
+            </div>
+            <div class="form-group">
+              <label>Data Update Frequency (seconds)</label>
+              <input type="number" id="profileUpdateFreq" min="5" placeholder="e.g. 30">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Additional Information</div>
+          <div class="form-grid single">
+            <div class="form-group full">
+              <label>Station Description</label>
+              <textarea id="profileDesc" placeholder="Brief description of your station, location highlights, and special features..."></textarea>
+            </div>
+            <div class="form-group full">
+              <label>Parking Specifications</label>
+              <input type="text" id="profileParkingSpecs" placeholder="e.g. 50 slots, covered parking, ANPR enabled">
+            </div>
+            <div class="form-group full">
+              <label>Nearby Landmarks</label>
+              <input type="text" id="profileLandmarks" placeholder="e.g. Near XYZ Mall, 2km from Airport">
+            </div>
+            <div class="form-group full">
+              <label>Special Notes</label>
+              <textarea id="profileNotes" placeholder="e.g. Under maintenance schedule every Sunday 10-12 PM. Premium rates on peak hours..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Payment & Service</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label style="font-size:10px;font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:10px;">Payment Methods Accepted</label>
+              <div class="connector-tags">
+                <div class="connector-tag" onclick="toggleConnector(this,'Card Payment')">💳 Card</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Mobile Payment')">📱 Mobile Pay</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Cash')">💵 Cash</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Wallet')">💰 Wallet</div>
+                <div class="connector-tag" onclick="toggleConnector(this,'Subscription')">📅 Subscription</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Average Charging Time (Fast)</label>
+              <input type="text" id="profileChargeFastTime" placeholder="e.g. 20-30 minutes">
+            </div>
+            <div class="form-group">
+              <label>Average Charging Time (Slow)</label>
+              <input type="text" id="profileChargeSlowTime" placeholder="e.g. 6-8 hours">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Monthly Metrics (Optional)</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Average Daily Sessions</label>
+              <input type="number" id="profileAvgSessions" min="0" placeholder="e.g. 45">
+            </div>
+            <div class="form-group">
+              <label>Peak Hour</label>
+              <input type="time" id="profilePeakHour" placeholder="Peak usage time">
+            </div>
+            <div class="form-group">
+              <label>Average Session Duration (min)</label>
+              <input type="number" id="profileAvgDuration" min="0" placeholder="e.g. 35">
+            </div>
+            <div class="form-group">
+              <label>Monthly Energy Delivered (kWh)</label>
+              <input type="number" id="profileMonthlyEnergy" min="0" placeholder="e.g. 8500">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" style="padding:28px;">
+          <button class="btn-save" id="saveProfileBtn" onclick="saveStationProfile()">Save Station Profile</button>
+        </div>
+        <div class="form-msg" id="profileMsg" style="margin:0 28px 28px;"></div>
       </div>
 
       <!-- ═══ TELEMETRY PANEL ═══ -->
@@ -699,8 +891,44 @@ function populateAllFields(){
   document.getElementById('chgPrice').value = s.pricingKwh||'';
   if(s.connectors){
     const list = s.connectors.split(',').map(c=>c.trim());
-    document.querySelectorAll('.connector-tag').forEach(tag=>{
+    document.querySelectorAll('#panel-chargers .connector-tag').forEach(tag=>{
       if(list.includes(tag.textContent.trim())) tag.classList.add('selected');
+    });
+  }
+
+  // Profile
+  document.getElementById('profileType').value = s.stationType||'';
+  document.getElementById('profileSlots').value = s.totalSlots||'';
+  document.getElementById('profileFastSlots').value = s.fastChargingSlots||'';
+  document.getElementById('profileSlowSlots').value = s.slowChargingSlots||'';
+  document.getElementById('profilePowerKva').value = s.powerCapacityKva||'';
+  document.getElementById('profileGridType').value = s.gridType||'';
+  document.getElementById('profileUptime').value = s.uptime||'';
+  document.getElementById('profileUpdateFreq').value = s.updateFrequency||'30';
+  document.getElementById('profileDesc').value = s.stationDescription||'';
+  document.getElementById('profileParkingSpecs').value = s.parkingSpecs||'';
+  document.getElementById('profileLandmarks').value = s.landmarks||'';
+  document.getElementById('profileNotes').value = s.specialNotes||'';
+  document.getElementById('profileChargeFastTime').value = s.chargeFastTime||'';
+  document.getElementById('profileChargeSlowTime').value = s.chargeSlowTime||'';
+  document.getElementById('profileAvgSessions').value = s.avgDailySessions||'';
+  document.getElementById('profilePeakHour').value = s.peakHour||'';
+  document.getElementById('profileAvgDuration').value = s.avgSessionDuration||'';
+  document.getElementById('profileMonthlyEnergy').value = s.monthlyEnergyDelivered||'';
+  
+  // Amenities
+  if(s.amenities){
+    const amen = s.amenities.split(',').map(a=>a.trim());
+    document.querySelectorAll('#amenitiesTags .connector-tag').forEach(tag=>{
+      if(amen.includes(tag.textContent.trim())) tag.classList.add('selected');
+    });
+  }
+
+  // Payment methods
+  if(s.paymentMethods){
+    const pay = s.paymentMethods.split(',').map(p=>p.trim());
+    document.querySelectorAll('#panel-profile .form-grid:nth-of-type(5) .connector-tag').forEach(tag=>{
+      if(pay.includes(tag.textContent.trim())) tag.classList.add('selected');
     });
   }
 
@@ -862,6 +1090,61 @@ window.saveChargers = async function(){
     showToast('Charger info updated!','success');
   } catch(e){ msg.className='form-msg error'; msg.textContent='Failed to save. Try again.'; }
   btn.disabled=false; btn.textContent='Save Charger Info';
+};
+
+/* ── SAVE STATION PROFILE ── */
+window.saveStationProfile = async function(){
+  const btn = document.getElementById('saveProfileBtn');
+  const msg = document.getElementById('profileMsg');
+  msg.className='form-msg';
+  
+  const stationType = document.getElementById('profileType').value;
+  const totalSlots = parseInt(document.getElementById('profileSlots').value)||0;
+  const fastSlots = parseInt(document.getElementById('profileFastSlots').value)||0;
+  const slowSlots = parseInt(document.getElementById('profileSlowSlots').value)||0;
+  const powerKva = parseFloat(document.getElementById('profilePowerKva').value)||0;
+  const gridType = document.getElementById('profileGridType').value;
+  const uptime = parseFloat(document.getElementById('profileUptime').value)||0;
+  const updateFreq = parseInt(document.getElementById('profileUpdateFreq').value)||30;
+  const desc = document.getElementById('profileDesc').value.trim();
+  const parkingSpecs = document.getElementById('profileParkingSpecs').value.trim();
+  const landmarks = document.getElementById('profileLandmarks').value.trim();
+  const notes = document.getElementById('profileNotes').value.trim();
+  const chargeFastTime = document.getElementById('profileChargeFastTime').value.trim();
+  const chargeSlowTime = document.getElementById('profileChargeSlowTime').value.trim();
+  const avgSessions = parseInt(document.getElementById('profileAvgSessions').value)||0;
+  const peakHour = document.getElementById('profilePeakHour').value;
+  const avgDuration = parseInt(document.getElementById('profileAvgDuration').value)||0;
+  const monthlyEnergy = parseFloat(document.getElementById('profileMonthlyEnergy').value)||0;
+  
+  // Get selected amenities and payment methods
+  const amenitiesList = Array.from(document.querySelectorAll('#amenitiesTags .connector-tag.selected')).map(t=>t.textContent.trim()).join(', ');
+  const paymentList = Array.from(document.querySelectorAll('#panel-profile .form-grid:nth-of-type(5) .connector-tag.selected')).map(t=>t.textContent.trim()).join(', ');
+
+  if(!stationType){ msg.className='form-msg error'; msg.textContent='Please select a station type.'; return; }
+  if(!totalSlots||totalSlots<1){ msg.className='form-msg error'; msg.textContent='Please enter total slots.'; return; }
+
+  btn.disabled=true; btn.textContent='Saving...';
+  try {
+    const updateData = {
+      stationType, totalSlots, fastChargingSlots: fastSlots, slowChargingSlots: slowSlots,
+      powerCapacityKva: powerKva, gridType, uptime, updateFrequency: updateFreq,
+      stationDescription: desc, parkingSpecs, landmarks, specialNotes: notes,
+      chargeFastTime, chargeSlowTime,
+      avgDailySessions: avgSessions, peakHour, avgSessionDuration: avgDuration, monthlyEnergyDelivered: monthlyEnergy,
+      amenities: amenitiesList, paymentMethods: paymentList,
+      updatedAt: new Date().toISOString()
+    };
+    await updateDoc(stationRef, updateData);
+    stationDoc = {...stationDoc, ...updateData};
+    await logUpdate('Station Profile', stationType + ' · ' + totalSlots + ' slots · ' + amenitiesList);
+    msg.className='form-msg success'; msg.textContent='Station profile updated successfully!';
+    showToast('Station profile saved!','success');
+  } catch(e){ 
+    console.error(e);
+    msg.className='form-msg error'; msg.textContent='Failed to save. Try again.'; 
+  }
+  btn.disabled=false; btn.textContent='Save Station Profile';
 };
 
 /* ── SAVE HOURS & CONTACT ── */
