@@ -146,6 +146,26 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:cen
 .act-plan:hover{background:rgba(0,229,255,0.12);border-color:var(--electric);}
 .act-unsuspend{background:rgba(118,255,3,0.06);color:var(--volt);border-color:rgba(118,255,3,0.15);}
 .act-unsuspend:hover{background:rgba(118,255,3,0.12);border-color:var(--volt);}
+.act-view{background:rgba(0,229,255,0.06);color:var(--electric);border-color:rgba(0,229,255,0.15);}
+.act-view:hover{background:rgba(0,229,255,0.12);border-color:var(--electric);}
+
+/* MODAL STYLES */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:950;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);transition:color 0.2s;}
+.modal-close:hover{color:var(--electric);}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;text-transform:uppercase;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.modal-form{display:flex;flex-direction:column;gap:12px;}
+.modal-form input,.modal-form select{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius);font-size:12px;outline:none;}
+.modal-form input:focus,.modal-form select:focus{border-color:var(--amber);}
+.modal-form-label{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:8px;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
+.modal-btn-submit{padding:10px 24px;background:var(--amber);color:#000;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;transition:all 0.2s;font-family:'Rajdhani',sans-serif;}
+.modal-btn-submit:hover{box-shadow:0 0 20px rgba(255,171,0,0.5);}
+.modal-btn-cancel{padding:10px 24px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius);font-weight:700;cursor:pointer;transition:all 0.2s;}
+.modal-btn-cancel:hover{border-color:var(--muted);color:var(--text);}
 
 /* EMPTY STATE */
 .empty-state{padding:40px;text-align:center;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.1em;}
@@ -226,6 +246,77 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:cen
   <h2>Admin Access Only</h2>
   <p>This panel is restricted to VoltIQ administrators only. Please log in with an admin account and the correct secret key.</p>
   <button class="btn-goto" onclick="window.location.href='login.html'">Go to Login</button>
+</div>
+
+<!-- STATION DETAILS MODAL -->
+<div class="modal-overlay" id="stationModal" onclick="if(event.target===this)closeStationModal()">
+  <div class="modal-box" style="max-width:600px;max-height:80vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeStationModal()">✕</button>
+    <div style="padding:24px;">
+      <div class="modal-title" id="modalStationName">—</div>
+      
+      <!-- Tabs -->
+      <div style="display:flex;gap:8px;margin:20px 0 16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+        <button class="modal-tab active" onclick="switchModalTab('basic')" style="padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.1em;border-bottom:2px solid transparent;margin-bottom:-12px;transition:all 0.2s;" class="modal-tab-btn">Basic Info</button>
+        <button class="modal-tab" onclick="switchModalTab('details')" style="padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.1em;border-bottom:2px solid transparent;margin-bottom:-12px;transition:all 0.2s;" class="modal-tab-btn">Facilities</button>
+        <button class="modal-tab" onclick="switchModalTab('technical')" style="padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.1em;border-bottom:2px solid transparent;margin-bottom:-12px;transition:all 0.2s;" class="modal-tab-btn">Technical</button>
+      </div>
+      
+      <!-- Basic Tab -->
+      <div id="modalTabBasic" style="display:block;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;">
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Address:</label><span id="mAddress">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">City:</label><span id="mCity">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">State:</label><span id="mState">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Status:</label><span id="mStatus">—</span></div>
+          <div style="grid-column:1/-1"><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Owner:</label><span id="mOwner">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Email:</label><span id="mEmail">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Phone:</label><span id="mPhone">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Pricing:</label><span id="mPricing">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Chargers:</label><span id="mChargers">—</span></div>
+          <div style="grid-column:1/-1"><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Hours:</label><span id="mHours">—</span></div>
+        </div>
+      </div>
+
+      <!-- Details Tab -->
+      <div id="modalTabDetails" style="display:none;">
+        <div style="padding:0;">
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:bold;color:var(--volt);font-family:'Space Mono',monospace;font-size:10px">Amenities:</label>
+            <div id="mAmenities" style="font-size:12px;margin-top:6px;color:var(--text)">—</div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:bold;color:var(--volt);font-family:'Space Mono',monospace;font-size:10px">Safety Features:</label>
+            <div id="mSafety" style="font-size:12px;margin-top:6px;color:var(--text)">—</div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:bold;color:var(--volt);font-family:'Space Mono',monospace;font-size:10px">Accessibility:</label>
+            <div id="mAccessibility" style="font-size:12px;margin-top:6px;color:var(--text)">—</div>
+          </div>
+          <div style="margin-bottom:0;">
+            <label style="font-weight:bold;color:var(--volt);font-family:'Space Mono',monospace;font-size:10px">Description:</label>
+            <div id="mDescription" style="font-size:12px;margin-top:6px;color:var(--text);line-height:1.5;max-height:150px;overflow-y:auto;">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Tab -->
+      <div id="modalTabTechnical" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;">
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Type:</label><span id="mType">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Total Slots:</label><span id="mTotalSlots">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Fast Slots:</label><span id="mFastSlots">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Slow Slots:</label><span id="mSlowSlots">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Power (kVA):</label><span id="mPowerKva">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Grid Type:</label><span id="mGridType">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Uptime SLA:</label><span id="mUptime">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Fast Charge:</label><span id="mFastTime">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Slow Charge:</label><span id="mSlowTime">—</span></div>
+          <div><label style="color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;display:block;margin-bottom:4px">Update Freq:</label><span id="mUpdateFreq">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- CONFIRM MODAL -->
@@ -772,6 +863,7 @@ function renderStations(list){
       <td><span style="font-family:'Space Mono',monospace;font-size:12px;color:${loadColor}">${load}%</span></td>
       <td>
         <div class="action-row">
+          <button class="act-btn act-view" onclick="viewStationDetails('${s.id}')">View</button>
           ${s.status!=='offline'
             ? `<button class="act-btn act-suspend" onclick="setStationStatus('${s.id}','offline')">Suspend</button>`
             : `<button class="act-btn act-unsuspend" onclick="setStationStatus('${s.id}','active')">Reinstate</button>`
@@ -887,6 +979,70 @@ window.closeConfirm = function(){ document.getElementById('confirmOverlay').clas
 // Close modals on overlay click
 document.getElementById('confirmOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('confirmOverlay')) closeConfirm(); });
 document.getElementById('planModal').addEventListener('click',e=>{ if(e.target===document.getElementById('planModal')) closePlanModal(); });
+document.getElementById('stationModal').addEventListener('click',e=>{ if(e.target===document.getElementById('stationModal')) closeStationModal(); });
+
+/* ════════════════════════════════════
+   STATION DETAILS MODAL
+════════════════════════════════════ */
+window.viewStationDetails = function(stationId){
+  const station = allStations.find(s=>s.id===stationId);
+  if(!station) return;
+
+  // Populate modal
+  document.getElementById('modalStationName').textContent = station.name || '—';
+  document.getElementById('mAddress').textContent = station.address || '—';
+  document.getElementById('mCity').textContent = station.city || '—';
+  document.getElementById('mState').textContent = station.state || '—';
+  document.getElementById('mStatus').textContent = (station.status||'—').toUpperCase();
+  document.getElementById('mOwner').textContent = station.ownerName || '—';
+  document.getElementById('mEmail').textContent = station.ownerEmail || '—';
+  document.getElementById('mPhone').textContent = station.ownerPhone || '—';
+  document.getElementById('mPricing').textContent = (station.pricingKwh||'—') + ' ₹/kWh';
+  document.getElementById('mChargers').textContent = (station.chargerCount||'—') + ' units';
+  document.getElementById('mHours').textContent = station.operatingHours || '—';
+
+  // Details tab
+  document.getElementById('mAmenities').textContent = station.amenities ? station.amenities.split(',').map(x=>x.trim()).join(' • ') : '—';
+  document.getElementById('mSafety').textContent = station.safetyFeatures ? station.safetyFeatures.split(',').map(x=>x.trim()).join(' • ') : 'Not specified';
+  document.getElementById('mAccessibility').textContent = station.accessibilityFeatures ? station.accessibilityFeatures.split(',').map(x=>x.trim()).join(' • ') : 'Not specified';
+  document.getElementById('mDescription').textContent = station.stationDescription || 'No description available';
+
+  // Technical tab
+  document.getElementById('mType').textContent = station.stationType || '—';
+  document.getElementById('mTotalSlots').textContent = (station.totalSlots || '—') + ' slots';
+  document.getElementById('mFastSlots').textContent = (station.fastChargingSlots || '—') + ' slots';
+  document.getElementById('mSlowSlots').textContent = (station.slowChargingSlots || '—') + ' slots';
+  document.getElementById('mPowerKva').textContent = (station.powerCapacityKva || '—') + ' kVA';
+  document.getElementById('mGridType').textContent = station.gridType || '—';
+  document.getElementById('mUptime').textContent = (station.uptime || '—') + '%';
+  document.getElementById('mFastTime').textContent = station.chargeFastTime || '—';
+  document.getElementById('mSlowTime').textContent = station.chargeSlowTime || '—';
+  document.getElementById('mUpdateFreq').textContent = (station.updateFrequency || '30') + ' sec';
+
+  // Open modal
+  document.getElementById('stationModal').classList.add('show');
+  // Reset to basic tab
+  switchModalTab('basic');
+};
+
+window.closeStationModal = function(){
+  document.getElementById('stationModal').classList.remove('show');
+};
+
+window.switchModalTab = function(tab){
+  const tabs = ['basic','details','technical'];
+  tabs.forEach(t=>{
+    const el = document.getElementById('modalTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(el) el.style.display = t===tab ? 'block' : 'none';
+  });
+  // Update active tab button
+  document.querySelectorAll('[class*="modal-tab"]').forEach(btn=>{
+    if(btn.textContent.toLowerCase().includes('basic') && tab==='basic') btn.style.color='var(--electric)';
+    else if(btn.textContent.toLowerCase().includes('facilities') && tab==='details') btn.style.color='var(--electric)';
+    else if(btn.textContent.toLowerCase().includes('technical') && tab==='technical') btn.style.color='var(--electric)';
+    else btn.style.color='var(--muted)';
+  });
+};
 
 /* ── LOGOUT ── */
 window.handleLogout = async function(){

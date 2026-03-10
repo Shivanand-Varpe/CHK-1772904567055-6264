@@ -504,6 +504,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:48px 48px
     <div class="station-profile" id="stationProfile">
       <div class="profile-tabs">
         <div class="profile-tab active" onclick="switchProfileTab('info')">Info</div>
+        <div class="profile-tab" onclick="switchProfileTab('details')">Details</div>
         <div class="profile-tab" onclick="switchProfileTab('stats')">Stats</div>
         <div class="profile-tab" onclick="switchProfileTab('reviews')">Reviews</div>
       </div>
@@ -553,6 +554,74 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:48px 48px
             <div style="font-size:13px;color:var(--text)" id="pOwnerName">—</div>
             <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:2px" id="pOwnerEmail">—</div>
             <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:2px" id="pOwnerPhone">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAILS TAB -->
+      <div class="profile-tab-content" id="ptDetails">
+        <div class="profile-empty" id="detailsEmpty">
+          <span class="profile-empty-icon">🏢</span>
+          SELECT A STATION<br>TO VIEW DETAILS
+        </div>
+        <div id="profileDetailsContent" style="display:none">
+          <!-- Amenities -->
+          <div style="margin-bottom:20px">
+            <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Amenities</div>
+            <div id="detailsAmenities" style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--text)">—</div>
+          </div>
+
+          <!-- Safety Features -->
+          <div style="margin-bottom:20px">
+            <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Safety Features</div>
+            <div id="detailsSafety" style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--text)">—</div>
+          </div>
+
+          <!-- Accessibility -->
+          <div style="margin-bottom:20px">
+            <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Accessibility</div>
+            <div id="detailsAccessibility" style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--text)">—</div>
+          </div>
+
+          <!-- Technical Info -->
+          <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;border-radius:var(--radius);">
+            <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Technical Info</div>
+            <div class="profile-info-grid" style="grid-template-columns:1fr;gap:8px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;border-bottom:1px solid rgba(0,229,255,0.1);padding-bottom:6px">
+                <span style="color:var(--muted)">Station Type:</span>
+                <span id="detailsType" style="color:var(--electric)">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;border-bottom:1px solid rgba(0,229,255,0.1);padding-bottom:6px">
+                <span style="color:var(--muted)">Total Slots:</span>
+                <span id="detailsTotalSlots" style="color:var(--volt)">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;border-bottom:1px solid rgba(0,229,255,0.1);padding-bottom:6px">
+                <span style="color:var(--muted)">Fast Slots:</span>
+                <span id="detailsFastSlots" style="color:var(--volt)">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;border-bottom:1px solid rgba(0,229,255,0.1);padding-bottom:6px">
+                <span style="color:var(--muted)">Power Capacity:</span>
+                <span id="detailsPowerKva" style="color:var(--amber)">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;border-bottom:1px solid rgba(0,229,255,0.1);padding-bottom:6px">
+                <span style="color:var(--muted)">Grid Type:</span>
+                <span id="detailsGridType" style="color:var(--amber)">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;border-bottom:1px solid rgba(0,229,255,0.1);padding-bottom:6px">
+                <span style="color:var(--muted)">Uptime SLA:</span>
+                <span id="detailsUptime" style="color:var(--volt)">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding-top:6px">
+                <span style="color:var(--muted)">Fast Charge Time:</span>
+                <span id="detailsFastTime" style="color:var(--electric)">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Info -->
+          <div style="margin-top:16px">
+            <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Description</div>
+            <div id="detailsDesc" style="font-size:12px;color:var(--text);line-height:1.5;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius)">—</div>
           </div>
         </div>
       </div>
@@ -929,11 +998,11 @@ window.setForecast = function(type, btn){
    (Falls back to sample data)
 ══════════════════════════════════ */
 const SAMPLE_STATIONS = [
-  { id:'s1', name:'Pune Hub Central', address:'FC Road, Pune', city:'Pune', status:'active', powerLoad:67, pricingKwh:8.5, chargerCount:12, connectors:'CCS2, Type2', operatingHours:'24/7', ownerName:'Rajesh Patil', ownerEmail:'rajesh@volthub.in', ownerPhone:'+91 98765 43210', approved:true },
-  { id:'s2', name:'Mumbai North Station', address:'Andheri East, Mumbai', city:'Mumbai', status:'busy', powerLoad:89, pricingKwh:9.2, chargerCount:8, connectors:'CHAdeMO, CCS2', operatingHours:'6AM–11PM', ownerName:'Priya Sharma', ownerEmail:'priya@evcharge.co', ownerPhone:'+91 87654 32109', approved:true },
-  { id:'s3', name:'Nashik Green Node', address:'Gangapur Rd, Nashik', city:'Nashik', status:'active', powerLoad:42, pricingKwh:7.8, chargerCount:6, connectors:'Type2, AC', operatingHours:'8AM–10PM', ownerName:'Amit Desai', ownerEmail:'amit@nashikev.in', ownerPhone:'+91 76543 21098', approved:true },
-  { id:'s4', name:'Nagpur Central EV', address:'Sitabuldi, Nagpur', city:'Nagpur', status:'offline', powerLoad:0, pricingKwh:8.0, chargerCount:10, connectors:'CCS2, CHAdeMO', operatingHours:'24/7', ownerName:'Sunil Rao', ownerEmail:'sunil@nagpurev.in', ownerPhone:'+91 65432 10987', approved:true },
-  { id:'s5', name:'Aurangabad Fast Hub', address:'MIDC, Aurangabad', city:'Aurangabad', status:'active', powerLoad:55, pricingKwh:8.8, chargerCount:14, connectors:'CCS2, Type2, DC', operatingHours:'24/7', ownerName:'Meera Joshi', ownerEmail:'meera@aurahub.co', ownerPhone:'+91 54321 09876', approved:true },
+  { id:'s1', name:'Pune Hub Central', address:'FC Road, Pune', city:'Pune', status:'active', powerLoad:67, pricingKwh:8.5, chargerCount:12, connectors:'CCS2, Type2', operatingHours:'24/7', ownerName:'Rajesh Patil', ownerEmail:'rajesh@volthub.in', ownerPhone:'+91 98765 43210', approved:true, stationType:'Standalone Charging Hub', totalSlots:12, fastChargingSlots:8, slowChargingSlots:4, powerCapacityKva:100, gridType:'Three Phase (400V)', uptime:99.8, chargeFastTime:'20-25 min', amenities:'Free WiFi, Parking, Restroom, Café', stationDescription:'Premium EV charging hub in central Pune with modern facilities and 24/7 support.' },
+  { id:'s2', name:'Mumbai North Station', address:'Andheri East, Mumbai', city:'Mumbai', status:'busy', powerLoad:89, pricingKwh:9.2, chargerCount:8, connectors:'CHAdeMO, CCS2', operatingHours:'6AM–11PM', ownerName:'Priya Sharma', ownerEmail:'priya@evcharge.co', ownerPhone:'+91 87654 32109', approved:true, stationType:'Shopping Mall', totalSlots:8, fastChargingSlots:5, slowChargingSlots:3, powerCapacityKva:80, gridType:'Three Phase (400V)', uptime:99.5, chargeFastTime:'25-30 min', amenities:'WiFi, Parking, Shopping, Food Court', stationDescription:'Located inside Mumbai\'s premier shopping mall with retail and dining options.' },
+  { id:'s3', name:'Nashik Green Node', address:'Gangapur Rd, Nashik', city:'Nashik', status:'active', powerLoad:42, pricingKwh:7.8, chargerCount:6, connectors:'Type2, AC', operatingHours:'8AM–10PM', ownerName:'Amit Desai', ownerEmail:'amit@nashikev.in', ownerPhone:'+91 76543 21098', approved:true, stationType:'Public Parking', totalSlots:6, fastChargingSlots:2, slowChargingSlots:4, powerCapacityKva:50, gridType:'Single Phase (230V)', uptime:98.9, chargeFastTime:'30-35 min', amenities:'Parking, Wheelchair Access, Drinking Water', stationDescription:'Eco-friendly charging station with solar support and accessible facilities for all users.' },
+  { id:'s4', name:'Nagpur Central EV', address:'Sitabuldi, Nagpur', city:'Nagpur', status:'offline', powerLoad:0, pricingKwh:8.0, chargerCount:10, connectors:'CCS2, CHAdeMO', operatingHours:'24/7', ownerName:'Sunil Rao', ownerEmail:'sunil@nagpurev.in', ownerPhone:'+91 65432 10987', approved:true, stationType:'Standalone Charging Hub', totalSlots:10, fastChargingSlots:6, slowChargingSlots:4, powerCapacityKva:90, gridType:'Three Phase (400V)', uptime:99.2, chargeFastTime:'20 min', amenities:'WiFi, CCTV, Security, Waiting Area', stationDescription:'High-security charging hub with 24/7 monitoring and trained support staff.' },
+  { id:'s5', name:'Aurangabad Fast Hub', address:'MIDC, Aurangabad', city:'Aurangabad', status:'active', powerLoad:55, pricingKwh:8.8, chargerCount:14, connectors:'CCS2, Type2, DC', operatingHours:'24/7', ownerName:'Meera Joshi', ownerEmail:'meera@aurahub.co', ownerPhone:'+91 54321 09876', approved:true, stationType:'Petrol Pump', totalSlots:14, fastChargingSlots:10, slowChargingSlots:4, powerCapacityKva:120, gridType:'Three Phase (400V)', uptime:99.7, chargeFastTime:'18-22 min', amenities:'WiFi, Parking, Restroom, Vending Machine, ATM', stationDescription:'State-of-the-art fast-charging hub integrated with petrol pump services for convenience.' },
 ];
 
 let allStations = [];
@@ -987,6 +1056,8 @@ window.selectStation = function(id){
 function showStationProfile(s){
   document.getElementById('profileEmpty').style.display='none';
   document.getElementById('profileInfoContent').style.display='block';
+  document.getElementById('detailsEmpty').style.display='none';
+  document.getElementById('profileDetailsContent').style.display='block';
   document.getElementById('statsEmpty').style.display='none';
   document.getElementById('profileStatsContent').style.display='block';
   document.getElementById('reviewsEmpty').style.display='none';
@@ -1016,6 +1087,20 @@ function showStationProfile(s){
   document.getElementById('pOwnerEmail').textContent = s.ownerEmail||'—';
   document.getElementById('pOwnerPhone').textContent = s.ownerPhone||'—';
 
+  // Details tab — show amenities, safety, accessibility, and technical info
+  const formatList = (str) => str ? str.split(',').map(x=>x.trim()).join(' • ') : '—';
+  document.getElementById('detailsAmenities').textContent = formatList(s.amenities);
+  document.getElementById('detailsSafety').textContent = formatList(s.safetyFeatures || '');
+  document.getElementById('detailsAccessibility').textContent = formatList(s.accessibilityFeatures || '');
+  document.getElementById('detailsType').textContent = s.stationType || '—';
+  document.getElementById('detailsTotalSlots').textContent = (s.totalSlots || '—') + ' slots';
+  document.getElementById('detailsFastSlots').textContent = (s.fastChargingSlots || '—') + ' slots';
+  document.getElementById('detailsPowerKva').textContent = (s.powerCapacityKva || '—') + ' kVA';
+  document.getElementById('detailsGridType').textContent = s.gridType || '—';
+  document.getElementById('detailsUptime').textContent = (s.uptime || '—') + '%';
+  document.getElementById('detailsFastTime').textContent = s.chargeFastTime || '—';
+  document.getElementById('detailsDesc').textContent = s.stationDescription || '—';
+
   // Stats tab
   const sess = Math.round(50+Math.random()*200);
   const enrg = +(Math.random()*500+100).toFixed(1);
@@ -1042,11 +1127,13 @@ function showStationProfile(s){
 
 /* ── PROFILE TABS ── */
 window.switchProfileTab = function(tab){
-  ['info','stats','reviews'].forEach(t=>{
-    document.getElementById('pt'+t.charAt(0).toUpperCase()+t.slice(1))?.classList.remove('active');
+  ['info','details','stats','reviews'].forEach(t=>{
+    const el = document.getElementById('pt'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(el) el.classList.remove('active');
   });
   document.querySelectorAll('.profile-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('pt'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  const contentEl = document.getElementById('pt'+tab.charAt(0).toUpperCase()+tab.slice(1));
+  if(contentEl) contentEl.classList.add('active');
   event.target.classList.add('active');
 };
 
