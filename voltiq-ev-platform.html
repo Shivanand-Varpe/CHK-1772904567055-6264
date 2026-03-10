@@ -1074,6 +1074,72 @@ footer {
     </div>
   </div>
 </div>
+<div class="modal-backdrop" id="operatorModal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width: 450px;">
+    <button class="modal-close" id="closeOperatorModal" aria-label="Close">✕</button>
+    <h3>Update Station Data</h3>
+    <p class="modal-subtitle">Push real-time telemetry to the central grid</p>
+
+    <div class="add-review-form" style="border-top: none; padding-top: 0;">
+      <label>Select Your Station</label>
+      <select id="operatorStationSelect" class="review-textarea" style="min-height: 40px; margin-bottom: 16px; width: 100%; background: var(--bg2); color: var(--text); border: 1px solid var(--border);">
+        <option value="">Loading stations...</option>
+      </select>
+
+      <label>Current Status</label>
+      <select id="operatorStatusSelect" class="review-textarea" style="min-height: 40px; margin-bottom: 16px; width: 100%; background: var(--bg2); color: var(--text); border: 1px solid var(--border);">
+        <option value="active">Active (Online)</option>
+        <option value="busy">Busy (High Load)</option>
+        <option value="offline">Offline (Maintenance)</option>
+      </select>
+
+      <label>Power Load (%)</label>
+      <input type="number" id="operatorLoadInput" class="review-textarea" style="min-height: 40px; margin-bottom: 24px;" min="0" max="100" placeholder="e.g. 75">
+
+      <button class="btn-primary" id="operatorSubmitBtn" style="width: 100%; margin-bottom: 12px;">Push Telemetry Data</button>
+      
+      <div style="text-align: center; margin: 16px 0;">
+        <span style="font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace;">OR BULK UPLOAD</span>
+      </div>
+      
+      <div style="border: 1px dashed var(--border); padding: 16px; text-align: center; border-radius: var(--radius); cursor: pointer; transition: border-color 0.2s; background: rgba(0,229,255,0.02);" onmouseover="this.style.borderColor='var(--electric)'" onmouseout="this.style.borderColor='var(--border)'" onclick="showToast('CSV uploaded and queued for ML processing!','success')">
+        <span style="font-size: 20px; display: block; margin-bottom: 8px;">📁</span>
+        <span style="font-size: 12px; color: var(--electric); font-family: 'Space Mono', monospace;">Upload CSV Telemetry</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="profileModal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width: 480px;">
+    <button class="modal-close" id="closeProfileModal" aria-label="Close">✕</button>
+    <h3>User Profile</h3>
+    <p class="modal-subtitle">Manage your VoltIQ account</p>
+
+    <div style="background: var(--bg2); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius); margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(0,229,255,0.1); border: 1px solid var(--electric); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--electric);">👤</div>
+      <div>
+        <div id="profileEmail" style="font-family: 'Space Mono', monospace; font-size: 14px; color: #fff; margin-bottom: 4px;">Loading...</div>
+        <div id="profileRoleBadge" class="feature-tag" style="margin-top: 0;">OPERATOR</div>
+      </div>
+    </div>
+
+    <div class="add-review-form" style="border-top: none; padding-top: 0;">
+      <label>API Key (Read-Only)</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+        <input type="text" class="review-textarea" style="min-height: 40px; flex: 1; margin: 0; color: var(--volt);" value="vq_live_8f92jK3LmN01x" readonly>
+        <button class="btn-ghost" onclick="showToast('API Key copied!','success')" style="padding: 0 16px;">Copy</button>
+      </div>
+
+      <label>System Preferences</label>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 2px;">
+        <span style="font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace;">Enable V2G Auto-Deploy</span>
+        <input type="checkbox" checked style="accent-color: var(--electric);">
+      </div>
+      
+      <button class="btn-ghost" id="profileSignOutBtn" style="width: 100%; border-color: rgba(255,23,68,0.4); color: var(--red);">Sign Out</button>
+    </div>
+  </div>
+</div>
 <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true">
   <div class="modal" style="max-width: 400px;">
     <button class="modal-close" id="closeAuthModal" aria-label="Close">✕</button>
@@ -1091,7 +1157,8 @@ footer {
         <label>Select Role</label>
         <select id="authRole" class="review-textarea" style="min-height: 40px; width: 100%; background: var(--bg2); color: var(--text); border: 1px solid var(--border);">
           <option value="admin">Grid Administrator</option>
-          <option value="operator">Station Operator</option>
+          <option value="operator">Station Operator (Write Access)</option>
+          <option value="user">EV Driver (Read-Only)</option>
         </select>
       </div>
 
@@ -1111,8 +1178,33 @@ footer {
     <li><a href="#forecast">Forecast</a></li>
     <li><a href="#network-map">Network</a></li>
     <li><a href="#heatmap">Analytics</a></li>
+    
+    <li class="operator-only" style="display: none;"><a href="#" id="navOperatorBtn" style="color: var(--volt); font-weight: bold;">⚡ Data Panel</a></li>
+    
+    <li id="navProfileItem" style="display: none;"><a href="#" id="navProfileBtn">Profile</a></li>
   </ul>
-  <div class="nav-cta">
+  <div class="nav-cta" style="display: flex; align-items: center;">
+    <div class="nav-notifications" style="position: relative; margin-right: 12px;">
+      <button id="notiBtn" class="btn-ghost" style="padding: 8px; border: none; font-size: 18px; position: relative;" aria-label="Notifications">
+        🔔
+        <span id="notiBadge" style="position: absolute; top: 2px; right: 2px; background: var(--red); color: white; font-size: 9px; font-weight: bold; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace;">1</span>
+      </button>
+      
+      <div id="notiDropdown" style="display: none; position: absolute; top: 48px; right: 0; width: 320px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 1000; overflow: hidden; text-align: left;">
+        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px; text-transform: uppercase; color: var(--electric); display: flex; justify-content: space-between; align-items: center;">
+          System Alerts
+          <span style="font-size: 10px; font-family: 'Space Mono', monospace; color: var(--muted); cursor: pointer; transition: color 0.2s;" id="clearNotis" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">CLEAR</span>
+        </div>
+        <div id="notiList" style="max-height: 280px; overflow-y: auto;">
+          <div style="padding: 16px; border-bottom: 1px solid var(--border); background: rgba(255,23,68,0.05); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,23,68,0.1)'" onmouseout="this.style.background='rgba(255,23,68,0.05)'" onclick="document.getElementById('forecast').scrollIntoView({behavior:'smooth'}); document.getElementById('notiDropdown').style.display='none';">
+            <div style="font-size: 10px; color: var(--red); font-family: 'Space Mono', monospace; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;"><span class="status-dot" style="background: var(--red);"></span>AI PREDICTION ALERT</div>
+            <div style="font-size: 13px; color: var(--text); line-height: 1.5;">Grid congestion forecast at 18:30 UTC. <strong>+18% load anomaly</strong> detected based on live weather data.</div>
+            <div style="margin-top: 10px; color: var(--volt); font-size: 11px; font-family: 'Space Mono', monospace; font-weight: bold;">ACTION RECOMMENDED: Deploy V2G ›</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <button class="btn-ghost" id="navSignInBtn">Sign In</button>
     <button class="btn-primary" onclick="showToast('Demo request sent! We\'ll be in touch.','success')">Get Demo</button>
   </div>
@@ -1530,11 +1622,40 @@ authSubmitBtn.onclick = async () => {
   authSubmitBtn.textContent = isLoginMode ? 'Sign In' : 'Create Account';
 };
 
+const profileModal = document.getElementById('profileModal');
+const closeProfileModal = document.getElementById('closeProfileModal');
+const navProfileItem = document.getElementById('navProfileItem');
+const navProfileBtn = document.getElementById('navProfileBtn');
+const profileEmail = document.getElementById('profileEmail');
+const profileRoleBadge = document.getElementById('profileRoleBadge');
+const profileSignOutBtn = document.getElementById('profileSignOutBtn');
+
+// Open Profile Modal
+navProfileBtn.onclick = (e) => {
+  e.preventDefault();
+  profileEmail.textContent = currentUser?.email || 'Unknown User';
+  profileRoleBadge.textContent = userRole ? userRole.toUpperCase() : 'OPERATOR';
+  profileModal.classList.add('open');
+};
+
+// Close Profile Modal
+closeProfileModal.onclick = () => profileModal.classList.remove('open');
+
+// Sign out from Profile Modal
+profileSignOutBtn.onclick = () => {
+  profileModal.classList.remove('open');
+  handleSignOut();
+};
+
 function handleAuthSuccess(user) {
   currentUser = user;
   userRole = user.user_metadata?.role || 'operator';
   authModal.classList.remove('open');
-  navSignInBtn.textContent = 'Sign Out';
+  
+  // Hide the main Sign In button, show the Profile link
+  navSignInBtn.style.display = 'none';
+  navProfileItem.style.display = 'block';
+  
   showToast(`Logged in as ${userRole.toUpperCase()}`, 'success');
   applyRoleBasedUI();
 }
@@ -1543,7 +1664,12 @@ async function handleSignOut() {
   await _supabase.auth.signOut();
   currentUser = null;
   userRole = null;
+  
+  // Bring back the Sign In button, hide the Profile link
+  navSignInBtn.style.display = 'block';
   navSignInBtn.textContent = 'Sign In';
+  navProfileItem.style.display = 'none';
+  
   showToast('Signed out successfully.', 'info');
   
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
@@ -1556,10 +1682,13 @@ _supabase.auth.getSession().then(({ data: { session } }) => {
 
 function applyRoleBasedUI() {
   const adminElements = document.querySelectorAll('.admin-only');
+  const operatorElements = document.querySelectorAll('.operator-only');
   const dashboardDesc = document.querySelector('.section-desc');
 
   if (userRole === 'admin') {
+    // 1. ADMIN: Sees everything global, hides the operator upload panel
     adminElements.forEach(el => el.style.display = 'block');
+    operatorElements.forEach(el => el.style.display = 'none');
     dashboardDesc.textContent = "Global Bird's-Eye View: Monitoring entire grid infrastructure and regional load.";
     
     if(typeof originalForecast !== 'undefined') {
@@ -1567,17 +1696,32 @@ function applyRoleBasedUI() {
         forecastMainChart.update();
     }
   } else if (userRole === 'operator') {
+    // 2. OPERATOR: Hides global admin tools, sees the localized dashboard AND the data upload panel
     adminElements.forEach(el => el.style.display = 'none');
-    dashboardDesc.textContent = "Operator View: Monitoring localized charging nodes and specific hardware metrics.";
-    showToast('Global grid metrics hidden for Operator access.', 'info');
+    operatorElements.forEach(el => el.style.display = 'block'); 
+    dashboardDesc.textContent = "Operator View: Manage your station hardware and push live telemetry to the grid.";
+    showToast('Operator write-access granted.', 'info');
 
     if(typeof currentForecastData !== 'undefined') {
         currentForecastData = currentForecastData.map(v => v * 0.15);
         forecastMainChart.data.datasets[0].data = currentForecastData;
         forecastMainChart.update();
     }
+  } else {
+    // 3. REGULAR USER: Hides global admin tools AND hides the operator upload panel (Read-Only)
+    adminElements.forEach(el => el.style.display = 'none');
+    operatorElements.forEach(el => el.style.display = 'none'); 
+    dashboardDesc.textContent = "Driver View: Find live charging stations, check availability, and read community reviews.";
+    showToast('Logged in as Driver (Read-Only).', 'info');
+
+    if(typeof currentForecastData !== 'undefined') {
+        currentForecastData = currentForecastData.map(v => v * 0.15); // Show localized data curve
+        forecastMainChart.data.datasets[0].data = currentForecastData;
+        forecastMainChart.update();
+    }
   }
 }
+
 /* ── TOAST NOTIFICATIONS ── */
 let toastTimer = null;
 function showToast(msg, type = 'info') {
@@ -2231,7 +2375,99 @@ setInterval(() => {
     bar.className = 'station-bar-fill ' + (next > 80 ? 'fill-red' : next > 50 ? 'fill-amber' : 'fill-green');
   });
 }, 3000);
+/* ════════════════════════════════════
+   NOTIFICATION CENTER
+════════════════════════════════════ */
+const notiBtn = document.getElementById('notiBtn');
+const notiDropdown = document.getElementById('notiDropdown');
+const notiBadge = document.getElementById('notiBadge');
+const clearNotis = document.getElementById('clearNotis');
+const notiList = document.getElementById('notiList');
 
+// Toggle dropdown
+notiBtn.onclick = (e) => {
+  e.stopPropagation();
+  const isVisible = notiDropdown.style.display === 'block';
+  notiDropdown.style.display = isVisible ? 'none' : 'block';
+};
+
+// Clear notifications
+clearNotis.onclick = (e) => {
+  e.stopPropagation();
+  notiList.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--muted); font-size: 12px; font-family: \'Space Mono\', monospace;">No active alerts.</div>';
+  notiBadge.style.display = 'none';
+};
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!notiDropdown.contains(e.target)) {
+    notiDropdown.style.display = 'none';
+  }
+});
+/* ════════════════════════════════════
+   OPERATOR DATA PANEL LOGIC
+════════════════════════════════════ */
+const operatorModal = document.getElementById('operatorModal');
+const closeOperatorModal = document.getElementById('closeOperatorModal');
+const navOperatorBtn = document.getElementById('navOperatorBtn');
+const operatorStationSelect = document.getElementById('operatorStationSelect');
+const operatorSubmitBtn = document.getElementById('operatorSubmitBtn');
+
+// Open Modal & Populate Stations
+if(navOperatorBtn) {
+  navOperatorBtn.onclick = (e) => {
+    e.preventDefault();
+    
+    // Populate the dropdown with stations loaded from Supabase
+    if (stationsList && stationsList.length > 0) {
+      operatorStationSelect.innerHTML = stationsList.map(s => 
+        `<option value="${s.id}">${s.name}</option>`
+      ).join('');
+    } else {
+      operatorStationSelect.innerHTML = `<option value="">No stations available</option>`;
+    }
+    
+    operatorModal.classList.add('open');
+  };
+}
+
+// Close Modal
+if(closeOperatorModal) {
+  closeOperatorModal.onclick = () => operatorModal.classList.remove('open');
+}
+
+// Submit Data to Supabase
+if(operatorSubmitBtn) {
+  operatorSubmitBtn.onclick = async () => {
+    const stationId = operatorStationSelect.value;
+    const status = document.getElementById('operatorStatusSelect').value;
+    const load = document.getElementById('operatorLoadInput').value;
+
+    if (!stationId) { showToast('Please select a station.', 'error'); return; }
+    if (!load || load < 0 || load > 100) { showToast('Please enter a valid load percentage (0-100).', 'error'); return; }
+
+    operatorSubmitBtn.disabled = true;
+    operatorSubmitBtn.textContent = 'Pushing Data...';
+
+    // Update Supabase
+    const { error } = await _supabase
+      .from('charging_stations')
+      .update({ status: status, power_load: load })
+      .eq('id', stationId);
+
+    operatorSubmitBtn.disabled = false;
+    operatorSubmitBtn.textContent = 'Push Telemetry Data';
+
+    if (error) {
+      showToast('Failed to update station data.', 'error');
+      console.error(error);
+    } else {
+      showToast('Telemetry successfully pushed to Grid!', 'success');
+      operatorModal.classList.remove('open');
+      document.getElementById('operatorLoadInput').value = '';
+    }
+  };
+}
 </script>
 </body>
 </html>
